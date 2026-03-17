@@ -1,1 +1,5 @@
 *.tar
+*.tar.gz
+.env
+mas-admin/.env
+synapse-data/

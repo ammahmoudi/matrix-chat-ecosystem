@@ -77,6 +77,19 @@ services:
     networks:
       - matrix-net
 
+  mas-admin:
+    build:
+      context: ./mas-admin
+      args:
+        VITE_MAS_BASE_URL: ${VITE_MAS_BASE_URL:-https://auth.mamood.ir}
+        VITE_CLIENT_ID: ${VITE_CLIENT_ID:-00000000000000000000000007}
+        VITE_REDIRECT_BASE: ${VITE_REDIRECT_BASE:-http://matrix.mamood.ir:8080}
+    image: mas-admin:latest
+    container_name: mamood-mas-admin
+    restart: unless-stopped
+    networks:
+      - matrix-net
+
   nginx:
     image: nginx:latest
     container_name: mamood-nginx
@@ -94,6 +107,8 @@ services:
       element:
         condition: service_started
       synapse-admin:
+        condition: service_started
+      mas-admin:
         condition: service_started
     networks:
       - matrix-net
