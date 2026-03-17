@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mamood-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=client
+      - POSTGRES_PASSWORD=REDACTED
+      - POSTGRES_DB=matrix
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U client -d matrix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - matrix-net
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: mamood-synapse
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_CONFIG_PATH=/config/homeserver.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:8008/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - ./synapse-data:/data
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml
+      - ./synapse/synapse.log.config:/config/synapse.log.config
+    networks:
+      - matrix-net
+
+  element:
+    image: vectorim/element-web:latest
+    container_name: mamood-element
+    restart: unless-stopped
+    volumes:
+      - ./element/config.json:/app/config.json
+      - ./element/welcome.html:/app/welcome.html
+      - ./element/home.html:/app/home.html
+      - ./element/images:/app/images
+    networks:
+      - matrix-net
+
+  synapse-admin:
+    image: awesometechnologies/synapse-admin:latest
+    container_name: mamood-admin
+    restart: unless-stopped
+    networks:
+      - matrix-net
+
+  nginx:
+    image: nginx:latest
+    container_name: mamood-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"    # Synapse Admin
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      synapse:
+        condition: service_healthy
+      element:
+        condition: service_started
+      synapse-admin:
+        condition: service_started
+    networks:
+      - matrix-net
+
+networks:
+  matrix-net:
+    driver: bridge
+
+volumes:
+  postgres-data:

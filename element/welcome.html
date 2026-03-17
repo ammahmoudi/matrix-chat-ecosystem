@@ -1,0 +1,156 @@
+<style type="text/css">
+    .mx_custom_wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+        min-height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: #f8fafc;
+        box-sizing: border-box;
+    }
+
+    .mx_custom_logo {
+        width: 56px;
+        height: 56px;
+        margin-bottom: 1.1rem;
+    }
+
+    .mx_custom_title {
+        font-size: 1.65rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.35rem;
+        color: #f8fafc;
+    }
+
+    .mx_custom_tagline {
+        font-size: 0.83rem;
+        color: rgba(255,255,255,0.4);
+        margin: 0 0 2rem;
+        line-height: 1.5;
+    }
+
+    .mx_custom_actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        margin-bottom: 2rem;
+        width: 100%;
+        max-width: 260px;
+    }
+
+    .mx_custom_btn {
+        display: block;
+        padding: 0.78rem 1.5rem;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity 0.15s, transform 0.1s;
+        box-sizing: border-box;
+    }
+
+    .mx_custom_btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .mx_custom_btn:active { transform: translateY(0); }
+
+    .mx_custom_btn_primary {
+        background: #0ea5e9;
+        color: #fff !important;
+    }
+
+    .mx_custom_btn_secondary {
+        background: rgba(255,255,255,0.07);
+        color: rgba(255,255,255,0.8) !important;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .mx_custom_divider {
+        width: 100%;
+        max-width: 260px;
+        height: 1px;
+        background: rgba(255,255,255,0.06);
+        margin: 0 0 1.5rem;
+    }
+
+    .mx_custom_dl_label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255,255,255,0.25);
+        margin-bottom: 0.75rem;
+    }
+
+    .mx_custom_dl_grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+        max-width: 320px;
+        width: 100%;
+    }
+
+    .mx_custom_dl {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 8px;
+        padding: 0.5rem 0.65rem;
+        color: rgba(255,255,255,0.55) !important;
+        text-decoration: none;
+        font-size: 0.75rem;
+        transition: background 0.15s, color 0.15s;
+    }
+
+    .mx_custom_dl:hover {
+        background: rgba(255,255,255,0.09);
+        color: #fff !important;
+    }
+
+    .mx_custom_dl_name { font-weight: 600; line-height: 1.2; }
+    .mx_custom_dl_sub { font-size: 0.65rem; color: rgba(255,255,255,0.28); }
+</style>
+
+<div class="mx_custom_wrap">
+    <img class="mx_custom_logo" src="/images/logo.svg" alt="" onerror="this.style.display='none'">
+    <h1 class="mx_custom_title">Mamoox</h1>
+    <p class="mx_custom_tagline">Private &amp; encrypted messaging</p>
+
+    <div class="mx_custom_actions">
+        <a class="mx_custom_btn mx_custom_btn_primary" href="#/login">Sign In</a>
+        <a class="mx_custom_btn mx_custom_btn_secondary" href="#/register">Create Account</a>
+    </div>
+
+    <div class="mx_custom_divider"></div>
+    <div class="mx_custom_dl_label">Download the App</div>
+
+    <div class="mx_custom_dl_grid">
+        <a class="mx_custom_dl" href="https://myket.ir/app/io.element.android.x" target="_blank">
+            <span>📱</span>
+            <div><div class="mx_custom_dl_name">Android</div><div class="mx_custom_dl_sub">Element X &mdash; Myket</div></div>
+        </a>
+        <a class="mx_custom_dl" href="https://apps.apple.com/app/element-x-secure-messenger/id1631335056" target="_blank">
+            <span>🍎</span>
+            <div><div class="mx_custom_dl_name">iOS</div><div class="mx_custom_dl_sub">Element X</div></div>
+        </a>
+        <a class="mx_custom_dl" href="https://apps.apple.com/app/fluffychat/id1551469600" target="_blank">
+            <span>💬</span>
+            <div><div class="mx_custom_dl_name">iOS / macOS</div><div class="mx_custom_dl_sub">FluffyChat</div></div>
+        </a>
+        <a class="mx_custom_dl" href="https://packages.element.io/desktop/install/win32/x64/Element%20Setup.exe" target="_blank">
+            <span>🪟</span>
+            <div><div class="mx_custom_dl_name">Windows</div><div class="mx_custom_dl_sub">Element Desktop</div></div>
+        </a>
+        <a class="mx_custom_dl" href="https://packages.element.io/desktop/install/macos/Element.dmg" target="_blank">
+            <span>🍎</span>
+            <div><div class="mx_custom_dl_name">macOS</div><div class="mx_custom_dl_sub">Element Desktop</div></div>
+        </a>
+        <a class="mx_custom_dl" href="https://element.io/download#linux" target="_blank">
+            <span>🐧</span>
+            <div><div class="mx_custom_dl_name">Linux</div><div class="mx_custom_dl_sub">Element Desktop</div></div>
+        </a>
+    </div>
+</div>

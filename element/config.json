@@ -1,0 +1,84 @@
+{
+    "default_server_config": {
+        "m.homeserver": {
+            "base_url": "https://matrix.mamood.ir",
+            "server_name": "matrix.mamood.ir"
+        },
+        "m.identity_server": {
+            "base_url": "https://vector.im"
+        }
+    },
+
+    "brand": "Mamood Chat",
+    "default_theme": "dark",
+    "default_country_code": "IR",
+    "default_federate": false,
+
+    "disable_custom_urls": true,
+    "disable_guests": true,
+    "disable_3pid_login": true,
+
+    "branding": {
+        "welcome_background_url": [
+            "/images/bg/majoon.png",
+            "/images/bg/sleep.png"
+        ],
+        "auth_header_logo_url": "/images/logo.svg",
+        "auth_footer_links": [
+            { "text": "Android App", "url": "https://myket.ir/app/io.element.android.x" },
+            { "text": "iOS App", "url": "https://apps.apple.com/app/element-x-secure-messenger/id1631335056" },
+            { "text": "Desktop App", "url": "https://element.io/download" }
+        ]
+    },
+
+    "embedded_pages": {
+        "welcome_url": "/welcome.html",
+        "home_url": "/home.html"
+    },
+
+    "desktop_builds": {
+        "available": true,
+        "logo": "/images/logo.svg",
+        "url": "https://element.io/download",
+        "url_macos": "https://packages.element.io/desktop/install/macos/Element.dmg",
+        "url_win64": "https://packages.element.io/desktop/install/win32/x64/Element%20Setup.exe",
+        "url_linux": "https://element.io/download#linux"
+    },
+
+    "mobile_builds": {
+        "android": "https://myket.ir/app/io.element.android.x",
+        "ios": "https://apps.apple.com/app/element-x-secure-messenger/id1631335056",
+        "fdroid": "https://f-droid.org/packages/im.vector.app/"
+    },
+
+    "setting_defaults": {
+        "UIFeature.registration": true,
+        "show_timestamps_in_24h_format": true,
+        "UIFeature.communities": true,
+        "UIFeature.advancedSettings": true,
+        "UIFeature.help": true,
+        "UIFeature.feedback": false,
+        "sendReadReceipts": true,
+        "sendTypingNotifications": true,
+        "MessageComposerInput.ctrlEnterToSend": false,
+        "audioNotificationsEnabled": true,
+        "notificationsEnabled": true,
+        "roomListStyle": "compact"
+    },
+
+    "features": {
+        "feature_pinning": true,
+        "feature_thread": true,
+        "feature_video_rooms": true,
+        "feature_group_calls": true
+    },
+
+    "room_directory": {
+        "servers": [ "matrix.mamood.ir" ]
+    },
+
+    "default_device_display_name": "Mamood Chat",
+    "permalink_prefix": "https://chat.mamood.ir",
+    "bug_report_endpoint_url": "",
+    "privacy_policy_url": ""
+}
