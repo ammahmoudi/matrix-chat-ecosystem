@@ -24,8 +24,7 @@
             "/images/bg/sleep.png"
         ],
         "auth_header_logo_url": "/images/logo.svg",
-        "auth_footer_links": [
-            { "text": "Android — Element X", "url": "https://myket.ir/app/io.element.android.x" },
+        "auth_footer_links": [            { "text": "Home", "url": "#/welcome" },            { "text": "Android — Element X", "url": "https://myket.ir/app/io.element.android.x" },
             { "text": "Android — FluffyChat", "url": "https://myket.ir/app/chat.fluffy.fluffychat" },
             { "text": "iOS — Element X", "url": "https://apps.apple.com/app/element-x-secure-messenger/id1631335056" },
             { "text": "iOS — FluffyChat", "url": "https://apps.apple.com/app/fluffychat/id1551469600" },
@@ -47,7 +46,7 @@
         "url_linux": "https://element.io/download#linux"
     },
 
-    "mobile_guide_toast": false,
+    "mobile_guide_toast": true,
 
     "mobile_builds": {
         "android": "https://myket.ir/app/io.element.android.x",

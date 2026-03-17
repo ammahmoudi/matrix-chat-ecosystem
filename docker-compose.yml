@@ -48,6 +48,7 @@ services:
       - ./element/welcome.html:/app/welcome.html
       - ./element/home.html:/app/home.html
       - ./element/images:/app/images
+      - ./element/images/logo.png:/app/favicon.ico
     networks:
       - matrix-net
 
