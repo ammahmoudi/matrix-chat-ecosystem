@@ -9,6 +9,8 @@ Private Matrix chat server for mamood.ir using Synapse + Element Web + MAS.
 | Chat (Element Web) | https://chat.mamood.ir |
 | Matrix API | https://matrix.mamood.ir |
 | Auth (MAS account page) | https://auth.mamood.ir |
+| Push notifications (ntfy) | https://push.mamood.ir |
+| MAS Admin Panel | https://matrix.mamood.ir/mas-admin/ |
 | Synapse Admin Dashboard | http://matrix.mamood.ir:8080 |
 
 ---
@@ -19,7 +21,9 @@ Private Matrix chat server for mamood.ir using Synapse + Element Web + MAS.
 |---|---|
 | `mamood-synapse` | Matrix homeserver (Synapse) |
 | `mamood-mas` | Matrix Authentication Service — handles login/register/OIDC |
+| `mamood-ntfy` | ntfy push server (UnifiedPush for Android) |
 | `mamood-element` | Element Web frontend |
+| `mamood-mas-admin` | MAS Admin Panel (React SPA served via nginx container) |
 | `mamood-nginx` | Reverse proxy + SSL |
 | `mamood-postgres` | PostgreSQL (databases: `matrix` + `mas`) |
 | `mamood-admin` | Synapse Admin UI |
@@ -101,13 +105,72 @@ Then log into `http://matrix.mamood.ir:8080` with homeserver URL `http://matrix.
 
 ---
 
+## Push Notifications (UnifiedPush via ntfy)
+
+FCM/Firebase is blocked in Iran. We use [ntfy](https://ntfy.sh) as a self-hosted UnifiedPush provider.
+
+**Architecture:**
+```
+Element X (Android) ←─ ntfy app ←─ ntfy server (push.mamood.ir)
+                                         ↑
+                                    Synapse (direct HTTP push)
+```
+
+iOS push works via Apple APNs natively — no extra setup needed.
+
+### Get the SSL cert
+
+```powershell
+docker run --rm -it `
+  -v "$HOME/letsencrypt:/etc/letsencrypt" `
+  certbot/certbot certonly --manual --preferred-challenges dns `
+  --agree-tos --email am.mahmoudi@outlook.com `
+  -d push.mamood.ir
+```
+
+Add the DNS TXT record in Cloudflare, then deploy:
+
+```powershell
+scp -r "$HOME\letsencrypt\live\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
+scp -r "$HOME\letsencrypt\archive\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
+```
+
+### Setup on server
+
+```bash
+docker compose up -d ntfy
+docker exec mamood-nginx nginx -s reload
+```
+
+### Setup on Android (user steps)
+
+1. Install **ntfy** app from [F-Droid](https://f-droid.org/packages/io.heckel.ntfy/) or Myket
+2. In ntfy app → Settings → Default server → set to `https://push.mamood.ir`
+3. Open **Element X** → Settings → Notifications → it will detect ntfy automatically as the UnifiedPush distributor
+4. Enable notifications in Element X — done
+
+---
+
 ## Admin Panels
+
+### MAS Admin Panel — `https://matrix.mamood.ir/mas-admin/`
+Custom React admin UI for MAS — users, registration tokens, sessions.
+- Sign in with your `amma` account (must be promoted to admin)
+- Create/revoke registration tokens with one click, copy invite links
+- Lock/unlock users, grant/revoke admin
+
+**Rebuild after config changes:**
+```bash
+# On server
+docker compose build mas-admin
+docker compose up -d mas-admin
+```
 
 ### Synapse Admin — `http://matrix.mamood.ir:8080`
 - Rooms, media, federation, server stats
 - User listing (passwords/sessions managed by MAS now)
 
-### MAS (CLI only for token/user management)
+### MAS CLI (for scripting)
 ```bash
 docker exec mamood-mas mas-cli --help
 docker exec mamood-mas mas-cli manage --help
@@ -146,6 +209,13 @@ docker run --rm -it `
   certbot/certbot certonly --manual --preferred-challenges dns `
   --agree-tos --email am.mahmoudi@outlook.com `
   -d auth.mamood.ir
+
+# push.mamood.ir (separate cert)
+docker run --rm -it `
+  -v "$HOME/letsencrypt:/etc/letsencrypt" `
+  certbot/certbot certonly --manual --preferred-challenges dns `
+  --agree-tos --email am.mahmoudi@outlook.com `
+  -d push.mamood.ir
 ```
 
 For each: add the `_acme-challenge` TXT record shown in Cloudflare, wait ~30s, press Enter.
@@ -162,6 +232,9 @@ scp -r "$HOME\letsencrypt\archive\matrix.mamood.ir" root@178.239.151.162:/etc/le
 
 scp -r "$HOME\letsencrypt\live\auth.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
 scp -r "$HOME\letsencrypt\archive\auth.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
+
+scp -r "$HOME\letsencrypt\live\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
+scp -r "$HOME\letsencrypt\archive\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
 ```
 
 ```bash
@@ -169,7 +242,14 @@ scp -r "$HOME\letsencrypt\archive\auth.mamood.ir" root@178.239.151.162:/etc/lets
 docker exec mamood-nginx nginx -s reload
 ```
 
-Certs expire every **90 days** (next: 2026-06-15 for auth.mamood.ir).
+Certs expire every **90 days**.
+
+| Domain | Issued | Expires |
+|---|---|---|
+| chat.mamood.ir | — | check with `openssl s_client` |
+| matrix.mamood.ir | — | check with `openssl s_client` |
+| auth.mamood.ir | 2026-03-17 | 2026-06-15 |
+| push.mamood.ir | 2026-03-17 | 2026-06-15 |
 
 ---
 
@@ -187,6 +267,10 @@ scp synapse/homeserver.yaml root@178.239.151.162:/opt/matrix-project/synapse/hom
 docker exec mamood-nginx nginx -s reload   # nginx changes (no downtime)
 docker restart mamood-mas                  # MAS config changes
 docker restart mamood-synapse              # Synapse config changes
+docker restart mamood-ntfy                 # ntfy config changes
+
+# Rebuild MAS Admin Panel (after changing mas-admin/ source or .env)
+docker compose build mas-admin && docker compose up -d mas-admin
 ```
 
 ---
@@ -212,6 +296,13 @@ matrix-project/
 │   └── synapse.log.config      # logging config
 ├── mas/
 │   └── config.yaml             # MAS config (public_base, clients, policy, passwords)
+├── ntfy/
+│   └── server.yml              # ntfy push server config
+├── mas-admin/                  # MAS Admin Panel (React + Tailwind SPA)
+│   ├── src/                    # source code
+│   ├── Dockerfile              # builds and serves via nginx
+│   ├── .env                    # build config (gitignored) — copy from .env.example
+│   └── .env.example            # template
 ├── postgres/
 │   └── init.sql                # creates `mas` database on first run
 └── element/

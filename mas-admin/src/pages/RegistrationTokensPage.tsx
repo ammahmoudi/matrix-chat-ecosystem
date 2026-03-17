@@ -1,8 +1,247 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from 'react-oidc-context'
-import { Plus, Trash2, Copy, RefreshCw, Check } from 'lucide-react'
+import { Plus, Ban, Copy, RefreshCw, Check } from 'lucide-react'
 import { listTokens, createToken, deleteToken, type MasToken } from '../lib/masApi'
+import { CHAT_BASE_URL } from '../config'
 import { formatDistanceToNow, isPast } from 'date-fns'
+
+interface TokenRow {
+  id: string
+  attributes: MasToken
+}
+
+export default function RegistrationTokensPage() {
+  const auth = useAuth()
+  const token = auth.user?.access_token ?? ''
+
+  const [tokens, setTokens] = useState<TokenRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
+
+  const [customToken, setCustomToken] = useState('')
+  const [usageLimit, setUsageLimit] = useState<string>('1')
+  const [expiryDays, setExpiryDays] = useState<string>('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await listTokens(token)
+      setTokens(res.data as TokenRow[])
+      setTotal(res.meta.count)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to load tokens')
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => { load() }, [load])
+
+  async function handleCreate() {
+    setCreating(true)
+    try {
+      const usage = usageLimit === '' ? undefined : parseInt(usageLimit)
+      const expires = expiryDays === '' ? undefined : new Date(Date.now() + parseInt(expiryDays) * 86400 * 1000).toISOString()
+      const tokenStr = customToken.trim() || undefined
+      await createToken(token, { usage_limit: usage, expires_at: expires, token: tokenStr })
+      setCustomToken('')
+      setUsageLimit('1')
+      setExpiryDays('')
+      await load()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to create token')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function handleRevoke(id: string, t: string) {
+    if (!confirm(`Revoke token ${t.slice(0, 12)}…?`)) return
+    try {
+      await deleteToken(token, id)
+      await load()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to revoke token')
+    }
+  }
+
+  function copyLink(t: string) {
+    const url = `${CHAT_BASE_URL}/#/register?registration_token=${t}`
+    navigator.clipboard.writeText(url)
+    setCopied(t)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold">Registration Tokens</h1>
+          <p className="text-sm text-gray-500">{total} total</p>
+        </div>
+        <button onClick={load} className="btn-secondary">
+          <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
+
+      {/* Create form */}
+      <div className="card space-y-3">
+        <h2 className="text-sm font-medium">Create New Token</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Custom token (blank = random)</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. invite-2026"
+              value={customToken}
+              onChange={e => setCustomToken(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Max uses (blank = unlimited)</label>
+            <input
+              type="number"
+              min="1"
+              className="input"
+              placeholder="e.g. 1"
+              value={usageLimit}
+              onChange={e => setUsageLimit(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Expires in days (blank = never)</label>
+            <input
+              type="number"
+              min="1"
+              className="input"
+              placeholder="e.g. 7"
+              value={expiryDays}
+              onChange={e => setExpiryDays(e.target.value)}
+            />
+          </div>
+          <div className="flex items-end">
+            <button className="btn-primary w-full" disabled={creating} onClick={handleCreate}>
+              <Plus className="w-4 h-4" />
+              {creating ? 'Creating…' : 'Create'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      {/* Desktop table */}
+      <div className="card p-0 overflow-hidden hidden sm:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wide">
+              <th className="text-left px-4 py-3">Token</th>
+              <th className="text-left px-4 py-3">Uses</th>
+              <th className="text-left px-4 py-3">Expires</th>
+              <th className="text-left px-4 py-3">Status</th>
+              <th className="text-left px-4 py-3">Created</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+            {loading ? (
+              <tr><td colSpan={6} className="text-center py-8 text-gray-500">Loading…</td></tr>
+            ) : tokens.length === 0 ? (
+              <tr><td colSpan={6} className="text-center py-8 text-gray-500">No tokens yet</td></tr>
+            ) : tokens.map(({ id, attributes: t }) => {
+              const expired = t.expires_at ? isPast(new Date(t.expires_at)) : false
+              const exhausted = t.usage_limit !== null && t.times_used >= t.usage_limit
+              const revoked = !!t.revoked_at
+              const inactive = expired || exhausted || revoked
+              return (
+                <tr key={id} className={`hover:bg-gray-800/50 transition-colors ${inactive ? 'opacity-50' : ''}`}>
+                  <td className="px-4 py-3 font-mono text-xs max-w-[160px] truncate">{t.token}</td>
+                  <td className="px-4 py-3">
+                    {t.usage_limit === null
+                      ? <span className="badge-gray">{t.times_used} / ∞</span>
+                      : <span className={exhausted ? 'badge-red' : 'badge-green'}>{t.times_used} / {t.usage_limit}</span>
+                    }
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">
+                    {t.expires_at
+                      ? expired ? <span className="badge-red">Expired</span>
+                        : formatDistanceToNow(new Date(t.expires_at), { addSuffix: true })
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {revoked ? <span className="badge-red">Revoked</span>
+                      : t.valid ? <span className="badge-green">Valid</span>
+                        : <span className="badge-gray">Invalid</span>}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">
+                    {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 justify-end">
+                      <button title="Copy link" className="btn-secondary p-1.5" onClick={() => copyLink(t.token)}>
+                        {copied === t.token ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                      {!revoked && (
+                        <button title="Revoke" className="btn-danger p-1.5" onClick={() => handleRevoke(id, t.token)}>
+                          <Ban className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-2">
+        {loading ? (
+          <p className="text-center py-8 text-gray-500">Loading…</p>
+        ) : tokens.length === 0 ? (
+          <p className="text-center py-8 text-gray-500">No tokens yet</p>
+        ) : tokens.map(({ id, attributes: t }) => {
+          const expired = t.expires_at ? isPast(new Date(t.expires_at)) : false
+          const exhausted = t.usage_limit !== null && t.times_used >= t.usage_limit
+          const revoked = !!t.revoked_at
+          return (
+            <div key={id} className={`card space-y-2 ${(expired || exhausted || revoked) ? 'opacity-50' : ''}`}>
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-mono text-xs text-gray-300 break-all">{t.token}</span>
+                <div className="flex gap-1 flex-shrink-0">
+                  <button className="btn-secondary p-1.5" onClick={() => copyLink(t.token)}>
+                    {copied === t.token ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  {!revoked && (
+                    <button className="btn-danger p-1.5" onClick={() => handleRevoke(id, t.token)}>
+                      <Ban className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                <span>Uses: {t.times_used}{t.usage_limit !== null ? ` / ${t.usage_limit}` : ' / ∞'}</span>
+                {t.expires_at && <span>Expires: {expired ? 'Expired' : formatDistanceToNow(new Date(t.expires_at), { addSuffix: true })}</span>}
+                <span>{revoked ? '🚫 Revoked' : t.valid ? '✅ Valid' : '❌ Invalid'}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="text-xs text-gray-600">
+        Link format: <span className="font-mono break-all">{CHAT_BASE_URL}/#/register?registration_token=TOKEN</span>
+      </p>
+    </div>
+  )
+}
+
 
 interface TokenRow {
   id: string
@@ -44,8 +283,8 @@ export default function RegistrationTokensPage() {
     setCreating(true)
     try {
       const usage = usageLimit === '' ? undefined : parseInt(usageLimit)
-      const expires = expiryDays === '' ? undefined : parseInt(expiryDays) * 86400
-      await createToken(token, { usage_limit: usage, expires_in_secs: expires })
+      const expires = expiryDays === '' ? undefined : new Date(Date.now() + parseInt(expiryDays) * 86400 * 1000).toISOString()
+      await createToken(token, { usage_limit: usage, expires_at: expires })
       setUsageLimit('1')
       setExpiryDays('')
       await load()
@@ -67,15 +306,13 @@ export default function RegistrationTokensPage() {
   }
 
   function copyLink(t: string) {
-    const url = `${window.location.protocol}//${window.location.host.replace('matrix.mamood.ir:8080', 'chat.mamood.ir')}/#/register?registration_token=${t}`
+    const url = `${CHAT_BASE_URL}/#/register?registration_token=${t}`
     navigator.clipboard.writeText(url)
     setCopied(t)
     setTimeout(() => setCopied(null), 2000)
   }
 
-  const registrationBase = window.location.origin.includes('matrix.mamood.ir')
-    ? 'https://chat.mamood.ir'
-    : window.location.origin
+  const registrationBase = CHAT_BASE_URL
 
   return (
     <div className="space-y-4">

@@ -42,6 +42,8 @@ services:
     restart: unless-stopped
     environment:
       - SYNAPSE_CONFIG_PATH=/config/homeserver.yaml
+    extra_hosts:
+      - "push.mamood.ir:host-gateway"  # allows Synapse to reach nginx→ntfy on the host
     depends_on:
       postgres:
         condition: service_healthy
@@ -77,14 +79,28 @@ services:
     networks:
       - matrix-net
 
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: mamood-ntfy
+    restart: unless-stopped
+    command: serve
+    environment:
+      - TZ=Asia/Tehran
+    volumes:
+      - ./ntfy/server.yml:/etc/ntfy/server.yml
+      - ntfy-cache:/var/cache/ntfy
+      - ntfy-data:/var/lib/ntfy
+    networks:
+      - matrix-net
+
   mas-admin:
     build:
       context: ./mas-admin
       args:
         VITE_MAS_BASE_URL: ${VITE_MAS_BASE_URL:-https://auth.mamood.ir}
         VITE_CLIENT_ID: ${VITE_CLIENT_ID:-00000000000000000000000007}
-        VITE_REDIRECT_BASE: ${VITE_REDIRECT_BASE:-http://matrix.mamood.ir:8080}
-    image: mas-admin:latest
+        VITE_REDIRECT_BASE: ${VITE_REDIRECT_BASE:-https://matrix.mamood.ir}
+        VITE_CHAT_BASE_URL: ${VITE_CHAT_BASE_URL:-https://chat.mamood.ir}
     container_name: mamood-mas-admin
     restart: unless-stopped
     networks:
@@ -110,6 +126,8 @@ services:
         condition: service_started
       mas-admin:
         condition: service_started
+      ntfy:
+        condition: service_started
     networks:
       - matrix-net
 
@@ -120,3 +138,5 @@ networks:
 volumes:
   postgres-data:
   mas-data:
+  ntfy-cache:
+  ntfy-data:

@@ -1,0 +1,25 @@
+# ntfy server configuration
+# Docs: https://docs.ntfy.sh/config/
+
+# Public base URL — used in links and UnifiedPush registration
+base-url: "https://push.mamood.ir"
+
+# Listen on HTTP (nginx terminates SSL)
+listen-http: ":80"
+
+# Message cache — keeps messages for offline devices
+cache-file: "/var/cache/ntfy/cache.db"
+cache-duration: "24h"
+
+# Access control database
+auth-file: "/var/lib/ntfy/user.db"
+
+# Deny all by default — only allow UnifiedPush topics (up*) for everyone
+# Run after first start: docker exec -it mamood-ntfy ntfy access everyone 'up*' read-write
+auth-default-access: "deny-all"
+
+# We're behind nginx
+behind-proxy: true
+
+# Disable Firebase (we don't have it, this just suppresses warnings)
+firebase-key-file: ""

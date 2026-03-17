@@ -35,17 +35,20 @@ export interface MasUser {
   id: string
   username: string
   locked_at: string | null
-  can_request_admin: boolean
+  admin: boolean
   created_at: string
 }
 
 export interface MasToken {
   id: string
   token: string
+  valid: boolean
   usage_limit: number | null
   times_used: number
   created_at: string
+  last_used_at: string | null
   expires_at: string | null
+  revoked_at: string | null
 }
 
 export interface MasSession {
@@ -96,33 +99,34 @@ export async function unlockUser(token: string, id: string): Promise<void> {
 }
 
 export async function setAdmin(token: string, id: string, admin: boolean): Promise<void> {
-  return request(token, `/api/admin/v1/users/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ data: { attributes: { can_request_admin: admin } } }),
+  return request(token, `/api/admin/v1/users/${id}/set-admin`, {
+    method: 'POST',
+    body: JSON.stringify({ admin }),
   })
 }
 
 // ── Registration Tokens ───────────────────────────────────────────────────────
 
 export async function listTokens(token: string): Promise<ListResponse<MasToken>> {
-  return request(token, '/api/admin/v1/registration-tokens?page[first]=100')
+  return request(token, '/api/admin/v1/user-registration-tokens?page[first]=100')
 }
 
 export async function createToken(
   token: string,
-  opts: { usage_limit?: number; expires_in_secs?: number }
+  opts: { token?: string; usage_limit?: number; expires_at?: string }
 ): Promise<{ data: { id: string; attributes: MasToken } }> {
   const body: Record<string, unknown> = {}
+  if (opts.token !== undefined) body.token = opts.token
   if (opts.usage_limit !== undefined) body.usage_limit = opts.usage_limit
-  if (opts.expires_in_secs !== undefined) body.expires_in = opts.expires_in_secs
-  return request(token, '/api/admin/v1/registration-tokens', {
+  if (opts.expires_at !== undefined) body.expires_at = opts.expires_at
+  return request(token, '/api/admin/v1/user-registration-tokens', {
     method: 'POST',
     body: JSON.stringify(body),
   })
 }
 
 export async function deleteToken(token: string, id: string): Promise<void> {
-  return request(token, `/api/admin/v1/registration-tokens/${id}`, { method: 'DELETE' })
+  return request(token, `/api/admin/v1/user-registration-tokens/${id}/revoke`, { method: 'POST' })
 }
 
 // ── Compat Sessions ───────────────────────────────────────────────────────────
@@ -137,5 +141,5 @@ export async function listSessions(
 }
 
 export async function revokeSession(token: string, id: string): Promise<void> {
-  return request(token, `/api/admin/v1/compat-sessions/${id}`, { method: 'DELETE' })
+  return request(token, `/api/admin/v1/compat-sessions/${id}/finish`, { method: 'POST' })
 }
