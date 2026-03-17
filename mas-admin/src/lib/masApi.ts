@@ -32,7 +32,6 @@ async function request<T>(token: string, path: string, options?: RequestInit): P
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface MasUser {
-  id: string
   username: string
   locked_at: string | null
   admin: boolean
@@ -40,7 +39,6 @@ export interface MasUser {
 }
 
 export interface MasToken {
-  id: string
   token: string
   valid: boolean
   usage_limit: number | null
@@ -52,7 +50,6 @@ export interface MasToken {
 }
 
 export interface MasSession {
-  id: string
   created_at: string
   last_active_at: string | null
   user_agent: string | null

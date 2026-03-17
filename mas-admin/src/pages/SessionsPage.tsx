@@ -1,257 +1,130 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from 'react-oidc-context'
-import { Trash2, RefreshCw } from 'lucide-react'
-import { listSessions, revokeSession, type MasSession } from '../lib/masApi'
-import { formatDistanceToNow } from 'date-fns'
-
-interface SessionRow {
-  id: string
-  attributes: MasSession
-}
+import { listSessions, revokeSession, MasSession } from '../lib/masApi'
 
 export default function SessionsPage() {
   const auth = useAuth()
   const token = auth.user?.access_token ?? ''
 
-  const [sessions, setSessions] = useState<SessionRow[]>([])
-  const [total, setTotal] = useState(0)
+  const [sessions, setSessions] = useState<(MasSession & { id: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [revoking, setRevoking] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError('')
+  const load = async () => {
     try {
+      setLoading(true)
+      setError('')
       const res = await listSessions(token)
-      setSessions(res.data as SessionRow[])
-      setTotal(res.meta.count)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load sessions')
+      setSessions(res.data.map(d => ({ id: d.id, ...d.attributes })))
+    } catch (e: any) {
+      setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [])
 
-  async function handleRevoke(id: string) {
+  const finish = async (id: string) => {
     if (!confirm('Finish this session?')) return
-    setRevoking(id)
     try {
       await revokeSession(token, id)
       await load()
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Failed to finish session')
-    } finally {
-      setRevoking(null)
+    } catch (e: any) {
+      alert(e.message)
     }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Sessions</h1>
-          <p className="text-sm text-gray-500">{total} total (compat sessions)</p>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold">Compat Sessions</h1>
+        <button onClick={load} className="text-sm text-brand-400 hover:text-brand-300">Refresh</button>
+      </div>
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-700 text-red-300 px-4 py-2 rounded mb-4 text-sm">{error}</div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
         </div>
-        <button onClick={load} className="btn-secondary">
-          <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Refresh</span>
-        </button>
-      </div>
-
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-
-      {/* Desktop table */}
-      <div className="card p-0 overflow-hidden hidden sm:block">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wide">
-              <th className="text-left px-4 py-3">Session ID</th>
-              <th className="text-left px-4 py-3">User Agent</th>
-              <th className="text-left px-4 py-3">Last Active</th>
-              <th className="text-left px-4 py-3">Status</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-800">
-            {loading ? (
-              <tr><td colSpan={5} className="text-center py-8 text-gray-500">Loading…</td></tr>
-            ) : sessions.length === 0 ? (
-              <tr><td colSpan={5} className="text-center py-8 text-gray-500">No sessions found</td></tr>
-            ) : sessions.map(({ id, attributes: s }) => (
-              <tr key={id} className="hover:bg-gray-800/50 transition-colors">
-                <td className="px-4 py-3 font-mono text-xs text-gray-400">{id.slice(0, 16)}…</td>
-                <td className="px-4 py-3 text-gray-400 max-w-xs truncate text-xs">{s.user_agent ?? '—'}</td>
-                <td className="px-4 py-3 text-gray-500 text-xs">
-                  {s.last_active_at ? formatDistanceToNow(new Date(s.last_active_at), { addSuffix: true }) : '—'}
-                </td>
-                <td className="px-4 py-3">
-                  {s.finished_at ? <span className="badge-gray">Ended</span> : <span className="badge-green">Active</span>}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {!s.finished_at && (
-                    <button title="Finish session" disabled={revoking === id} className="btn-danger p-1.5"
-                      onClick={() => handleRevoke(id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile cards */}
-      <div className="sm:hidden space-y-2">
-        {loading ? (
-          <p className="text-center py-8 text-gray-500">Loading…</p>
-        ) : sessions.length === 0 ? (
-          <p className="text-center py-8 text-gray-500">No sessions found</p>
-        ) : sessions.map(({ id, attributes: s }) => (
-          <div key={id} className="card space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs text-gray-400">{id.slice(0, 20)}…</span>
-              {s.finished_at ? <span className="badge-gray">Ended</span> : <span className="badge-green">Active</span>}
-            </div>
-            <p className="text-xs text-gray-500 truncate">{s.user_agent ?? 'Unknown client'}</p>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600">
-                {s.last_active_at ? formatDistanceToNow(new Date(s.last_active_at), { addSuffix: true }) : 'Never'}
-              </span>
-              {!s.finished_at && (
-                <button disabled={revoking === id} className="btn-danger text-xs py-1 px-2"
-                  onClick={() => handleRevoke(id)}>
-                  <Trash2 className="w-3.5 h-3.5" /> Finish
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-
-interface SessionRow {
-  id: string
-  attributes: MasSession
-}
-
-export default function SessionsPage() {
-  const auth = useAuth()
-  const token = auth.user?.access_token ?? ''
-
-  const [sessions, setSessions] = useState<SessionRow[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [revoking, setRevoking] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await listSessions(token)
-      setSessions(res.data as SessionRow[])
-      setTotal(res.meta.count)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load sessions')
-    } finally {
-      setLoading(false)
-    }
-  }, [token])
-
-  useEffect(() => { load() }, [load])
-
-  async function handleRevoke(id: string) {
-    if (!confirm('Revoke this session?')) return
-    setRevoking(id)
-    try {
-      await revokeSession(token, id)
-      await load()
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Failed to revoke session')
-    } finally {
-      setRevoking(null)
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Active Sessions</h1>
-          <p className="text-sm text-gray-500">{total} total (compat sessions)</p>
-        </div>
-        <button onClick={load} className="btn-secondary">
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
-      </div>
-
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-
-      <div className="card p-0 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wide">
-              <th className="text-left px-4 py-3">Session ID</th>
-              <th className="text-left px-4 py-3">User Agent</th>
-              <th className="text-left px-4 py-3">Last active</th>
-              <th className="text-left px-4 py-3">Status</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-800">
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="text-center py-8 text-gray-500">Loading…</td>
-              </tr>
-            ) : sessions.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-8 text-gray-500">No sessions found</td>
-              </tr>
-            ) : (
-              sessions.map(({ id, attributes: s }) => (
-                <tr key={id} className="hover:bg-gray-800/50 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-400">
-                    {id.slice(0, 16)}…
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 max-w-xs truncate text-xs">
-                    {s.user_agent ?? '—'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">
-                    {s.last_active_at
-                      ? formatDistanceToNow(new Date(s.last_active_at), { addSuffix: true })
-                      : '—'
-                    }
-                  </td>
-                  <td className="px-4 py-3">
-                    {s.finished_at
-                      ? <span className="badge-gray">Ended</span>
-                      : <span className="badge-green">Active</span>
-                    }
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {!s.finished_at && (
-                      <button
-                        title="Revoke session"
-                        disabled={revoking === id}
-                        className="btn-danger p-1.5"
-                        onClick={() => handleRevoke(id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </td>
+      ) : sessions.length === 0 ? (
+        <p className="text-gray-500 text-sm text-center py-12">No sessions found.</p>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="min-w-full text-sm border border-gray-700 rounded-lg overflow-hidden">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">ID</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">User Agent</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Status</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Created</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Last Active</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {sessions.map(s => (
+                  <tr key={s.id} className="hover:bg-gray-800/50">
+                    <td className="px-4 py-2 font-mono text-xs text-gray-400">{s.id.slice(0, 10)}…</td>
+                    <td className="px-4 py-2 text-gray-300 max-w-xs truncate">{s.user_agent ?? '-'}</td>
+                    <td className="px-4 py-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.finished_at ? 'bg-gray-700 text-gray-400' : 'bg-green-900/40 text-green-400'}`}>
+                        {s.finished_at ? 'Finished' : 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-gray-400 text-xs">{new Date(s.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-2 text-gray-400 text-xs">{s.last_active_at ? new Date(s.last_active_at).toLocaleDateString() : '-'}</td>
+                    <td className="px-4 py-2">
+                      {!s.finished_at && (
+                        <button
+                          onClick={() => finish(s.id)}
+                          className="text-xs bg-red-700 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
+                        >
+                          Finish
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-3">
+            {sessions.map(s => (
+              <div key={s.id} className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <span className="font-mono text-xs text-gray-400">{s.id.slice(0, 14)}…</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${s.finished_at ? 'bg-gray-700 text-gray-400' : 'bg-green-900/40 text-green-400'}`}>
+                    {s.finished_at ? 'Finished' : 'Active'}
+                  </span>
+                </div>
+                {s.user_agent && (
+                  <p className="text-xs text-gray-400 truncate mb-2">{s.user_agent}</p>
+                )}
+                <div className="text-xs text-gray-500 space-y-0.5 mb-3">
+                  <div>Created: {new Date(s.created_at).toLocaleDateString()}</div>
+                  {s.last_active_at && <div>Last active: {new Date(s.last_active_at).toLocaleDateString()}</div>}
+                </div>
+                {!s.finished_at && (
+                  <button
+                    onClick={() => finish(s.id)}
+                    className="w-full bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Finish Session
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

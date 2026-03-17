@@ -1,361 +1,187 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from 'react-oidc-context'
-import { Search, Lock, Unlock, ShieldCheck, ShieldOff, RefreshCw } from 'lucide-react'
-import { listUsers, lockUser, unlockUser, setAdmin, type MasUser } from '../lib/masApi'
-import { formatDistanceToNow } from 'date-fns'
-
-interface UserRow {
-  id: string
-  attributes: MasUser
-}
+import { listUsers, lockUser, unlockUser, setAdmin, MasUser } from '../lib/masApi'
 
 export default function UsersPage() {
   const auth = useAuth()
   const token = auth.user?.access_token ?? ''
 
-  const [users, setUsers] = useState<UserRow[]>([])
-  const [total, setTotal] = useState(0)
+  const [users, setUsers] = useState<(MasUser & { id: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [search, setSearch] = useState('')
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
+  const [busy, setBusy] = useState<string | null>(null)
 
-  const load = useCallback(async (filter = '') => {
-    setLoading(true)
-    setError('')
+  const load = async (f?: string) => {
     try {
-      const res = await listUsers(token, { filter: filter || undefined })
-      setUsers(res.data as UserRow[])
-      setTotal(res.meta.count)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load users')
+      setLoading(true)
+      setError('')
+      const res = await listUsers(token, { filter: f })
+      setUsers(res.data.map(d => ({ id: d.id, ...d.attributes })))
+    } catch (e: any) {
+      setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }
 
-  useEffect(() => { load() }, [load])
-  useEffect(() => {
-    const t = setTimeout(() => load(search), 300)
-    return () => clearTimeout(t)
-  }, [search, load])
+  useEffect(() => { load() }, [])
 
-  async function doAction(id: string, action: () => Promise<void>) {
-    setActionLoading(id)
+  const handleFilter = (e: React.FormEvent) => {
+    e.preventDefault()
+    load(filter.trim() || undefined)
+  }
+
+  const toggleLock = async (u: MasUser & { id: string }) => {
+    if (!confirm(u.locked_at ? `Unlock ${u.username}?` : `Lock ${u.username}?`)) return
+    setBusy(u.id)
     try {
-      await action()
-      await load(search)
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Action failed')
+      if (u.locked_at) {
+        await unlockUser(token, u.id)
+      } else {
+        await lockUser(token, u.id)
+      }
+      await load(filter.trim() || undefined)
+    } catch (e: any) {
+      alert(e.message)
     } finally {
-      setActionLoading(null)
+      setBusy(null)
+    }
+  }
+
+  const toggleAdmin = async (u: MasUser & { id: string }) => {
+    if (!confirm(u.admin ? `Remove admin from ${u.username}?` : `Make ${u.username} admin?`)) return
+    setBusy(u.id)
+    try {
+      await setAdmin(token, u.id, !u.admin)
+      await load(filter.trim() || undefined)
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setBusy(null)
     }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Users</h1>
-          <p className="text-sm text-gray-500">{total} total</p>
-        </div>
-        <button onClick={() => load(search)} className="btn-secondary">
-          <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Refresh</span>
-        </button>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold">Users</h1>
+        <button onClick={() => load(filter.trim() || undefined)} className="text-sm text-brand-400 hover:text-brand-300">Refresh</button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-        <input className="input pl-9" placeholder="Search by username…" value={search} onChange={e => setSearch(e.target.value)} />
-      </div>
-
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-
-      {/* Desktop table */}
-      <div className="card p-0 overflow-hidden hidden sm:block">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wide">
-              <th className="text-left px-4 py-3">Username</th>
-              <th className="text-left px-4 py-3">Status</th>
-              <th className="text-left px-4 py-3">Role</th>
-              <th className="text-left px-4 py-3">Created</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-800">
-            {loading ? (
-              <tr><td colSpan={5} className="text-center py-8 text-gray-500">Loading…</td></tr>
-            ) : users.length === 0 ? (
-              <tr><td colSpan={5} className="text-center py-8 text-gray-500">No users found</td></tr>
-            ) : users.map(({ id, attributes: u }) => (
-              <tr key={id} className="hover:bg-gray-800/50 transition-colors">
-                <td className="px-4 py-3 font-mono font-medium">@{u.username}</td>
-                <td className="px-4 py-3">
-                  {u.locked_at ? <span className="badge-red">Locked</span> : <span className="badge-green">Active</span>}
-                </td>
-                <td className="px-4 py-3">
-                  {u.admin ? <span className="badge-yellow">Admin</span> : <span className="badge-gray">User</span>}
-                </td>
-                <td className="px-4 py-3 text-gray-500 text-xs">
-                  {formatDistanceToNow(new Date(u.created_at), { addSuffix: true })}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1 justify-end">
-                    {u.locked_at ? (
-                      <button title="Unlock" disabled={actionLoading === id} className="btn-secondary p-1.5"
-                        onClick={() => doAction(id, () => unlockUser(token, id))}>
-                        <Unlock className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <button title="Lock" disabled={actionLoading === id} className="btn-danger p-1.5"
-                        onClick={() => { if (confirm(`Lock @${u.username}?`)) doAction(id, () => lockUser(token, id)) }}>
-                        <Lock className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    {u.admin ? (
-                      <button title="Remove admin" disabled={actionLoading === id} className="btn-secondary p-1.5"
-                        onClick={() => { if (confirm(`Remove admin from @${u.username}?`)) doAction(id, () => setAdmin(token, id, false)) }}>
-                        <ShieldOff className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <button title="Make admin" disabled={actionLoading === id} className="btn-secondary p-1.5"
-                        onClick={() => doAction(id, () => setAdmin(token, id, true))}>
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile cards */}
-      <div className="sm:hidden space-y-2">
-        {loading ? (
-          <p className="text-center py-8 text-gray-500">Loading…</p>
-        ) : users.length === 0 ? (
-          <p className="text-center py-8 text-gray-500">No users found</p>
-        ) : users.map(({ id, attributes: u }) => (
-          <div key={id} className="card space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-medium">@{u.username}</span>
-              <div className="flex gap-1">
-                {u.locked_at ? <span className="badge-red">Locked</span> : <span className="badge-green">Active</span>}
-                {u.admin && <span className="badge-yellow">Admin</span>}
-              </div>
-            </div>
-            <div className="text-xs text-gray-500">
-              {formatDistanceToNow(new Date(u.created_at), { addSuffix: true })}
-            </div>
-            <div className="flex gap-2">
-              {u.locked_at ? (
-                <button disabled={actionLoading === id} className="btn-secondary flex-1 text-xs py-1"
-                  onClick={() => doAction(id, () => unlockUser(token, id))}>
-                  <Unlock className="w-3.5 h-3.5" /> Unlock
-                </button>
-              ) : (
-                <button disabled={actionLoading === id} className="btn-danger flex-1 text-xs py-1"
-                  onClick={() => { if (confirm(`Lock @${u.username}?`)) doAction(id, () => lockUser(token, id)) }}>
-                  <Lock className="w-3.5 h-3.5" /> Lock
-                </button>
-              )}
-              {u.admin ? (
-                <button disabled={actionLoading === id} className="btn-secondary flex-1 text-xs py-1"
-                  onClick={() => { if (confirm(`Remove admin from @${u.username}?`)) doAction(id, () => setAdmin(token, id, false)) }}>
-                  <ShieldOff className="w-3.5 h-3.5" /> Remove admin
-                </button>
-              ) : (
-                <button disabled={actionLoading === id} className="btn-secondary flex-1 text-xs py-1"
-                  onClick={() => doAction(id, () => setAdmin(token, id, true))}>
-                  <ShieldCheck className="w-3.5 h-3.5" /> Make admin
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-
-interface UserRow {
-  id: string
-  attributes: MasUser
-}
-
-export default function UsersPage() {
-  const auth = useAuth()
-  const token = auth.user?.access_token ?? ''
-
-  const [users, setUsers] = useState<UserRow[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [search, setSearch] = useState('')
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
-
-  const load = useCallback(async (filter = '') => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await listUsers(token, { filter: filter || undefined })
-      setUsers(res.data as UserRow[])
-      setTotal(res.meta.count)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load users')
-    } finally {
-      setLoading(false)
-    }
-  }, [token])
-
-  useEffect(() => { load() }, [load])
-
-  useEffect(() => {
-    const t = setTimeout(() => load(search), 300)
-    return () => clearTimeout(t)
-  }, [search, load])
-
-  async function doAction(id: string, action: () => Promise<void>) {
-    setActionLoading(id)
-    try {
-      await action()
-      await load(search)
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Action failed')
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Users</h1>
-          <p className="text-sm text-gray-500">{total} total</p>
-        </div>
-        <button onClick={() => load(search)} className="btn-secondary">
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+      <form onSubmit={handleFilter} className="flex gap-2 mb-4">
         <input
-          className="input pl-9"
-          placeholder="Search by username…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          type="text"
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          placeholder="Filter by username…"
+          className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand-500"
         />
-      </div>
+        <button type="submit" className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+          Search
+        </button>
+      </form>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && (
+        <div className="bg-red-900/30 border border-red-700 text-red-300 px-4 py-2 rounded mb-4 text-sm">{error}</div>
+      )}
 
-      <div className="card p-0 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wide">
-              <th className="text-left px-4 py-3">Username</th>
-              <th className="text-left px-4 py-3">Status</th>
-              <th className="text-left px-4 py-3">Admin</th>
-              <th className="text-left px-4 py-3">Created</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-800">
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="text-center py-8 text-gray-500">
-                  Loading…
-                </td>
-              </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-8 text-gray-500">
-                  No users found
-                </td>
-              </tr>
-            ) : (
-              users.map(({ id, attributes: u }) => (
-                <tr key={id} className="hover:bg-gray-800/50 transition-colors">
-                  <td className="px-4 py-3 font-mono font-medium">
-                    @{u.username}
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.locked_at ? (
-                      <span className="badge-red">Locked</span>
-                    ) : (
-                      <span className="badge-green">Active</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.admin ? (
-                      <span className="badge-yellow">Admin</span>
-                    ) : (
-                      <span className="badge-gray">User</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {formatDistanceToNow(new Date(u.created_at), { addSuffix: true })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 justify-end">
-                      {u.locked_at ? (
-                        <button
-                          title="Unlock"
-                          disabled={actionLoading === id}
-                          className="btn-secondary p-1.5"
-                          onClick={() => doAction(id, () => unlockUser(token, id))}
-                        >
-                          <Unlock className="w-3.5 h-3.5" />
-                        </button>
-                      ) : (
-                        <button
-                          title="Lock"
-                          disabled={actionLoading === id}
-                          className="btn-danger p-1.5"
-                          onClick={() => {
-                            if (confirm(`Lock @${u.username}?`))
-                              doAction(id, () => lockUser(token, id))
-                          }}
-                        >
-                          <Lock className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {u.admin ? (
-                        <button
-                          title="Remove admin"
-                          disabled={actionLoading === id}
-                          className="btn-secondary p-1.5"
-                          onClick={() => {
-                            if (confirm(`Remove admin from @${u.username}?`))
-                              doAction(id, () => setAdmin(token, id, false))
-                          }}
-                        >
-                          <ShieldOff className="w-3.5 h-3.5" />
-                        </button>
-                      ) : (
-                        <button
-                          title="Make admin"
-                          disabled={actionLoading === id}
-                          className="btn-secondary p-1.5"
-                          onClick={() => doAction(id, () => setAdmin(token, id, true))}
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : users.length === 0 ? (
+        <p className="text-gray-500 text-sm text-center py-12">No users found.</p>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="min-w-full text-sm border border-gray-700 rounded-lg overflow-hidden">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Username</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Admin</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Status</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Created</th>
+                  <th className="text-left px-4 py-2 text-gray-400 font-medium">Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {users.map(u => (
+                  <tr key={u.id} className="hover:bg-gray-800/50">
+                    <td className="px-4 py-2 font-medium text-gray-200">{u.username}</td>
+                    <td className="px-4 py-2">
+                      {u.admin && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-900/40 text-blue-400">Admin</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${u.locked_at ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}`}>
+                        {u.locked_at ? 'Locked' : 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-gray-400 text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex gap-2">
+                        <button
+                          disabled={busy === u.id}
+                          onClick={() => toggleLock(u)}
+                          className="text-xs px-2 py-1 rounded border border-gray-600 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-50"
+                        >
+                          {u.locked_at ? 'Unlock' : 'Lock'}
+                        </button>
+                        <button
+                          disabled={busy === u.id}
+                          onClick={() => toggleAdmin(u)}
+                          className="text-xs px-2 py-1 rounded border border-gray-600 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-50"
+                        >
+                          {u.admin ? 'Revoke Admin' : 'Make Admin'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-3">
+            {users.map(u => (
+              <div key={u.id} className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-gray-100">{u.username}</span>
+                  <div className="flex gap-1">
+                    {u.admin && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-900/40 text-blue-400">Admin</span>
+                    )}
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${u.locked_at ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}`}>
+                      {u.locked_at ? 'Locked' : 'Active'}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">Joined {new Date(u.created_at).toLocaleDateString()}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    disabled={busy === u.id}
+                    onClick={() => toggleLock(u)}
+                    className="py-2 rounded-lg text-sm font-medium border border-gray-600 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-50"
+                  >
+                    {u.locked_at ? 'Unlock' : 'Lock'}
+                  </button>
+                  <button
+                    disabled={busy === u.id}
+                    onClick={() => toggleAdmin(u)}
+                    className="py-2 rounded-lg text-sm font-medium border border-gray-600 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-50"
+                  >
+                    {u.admin ? 'Revoke Admin' : 'Make Admin'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
