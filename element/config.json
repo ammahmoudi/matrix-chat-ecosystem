@@ -5,7 +5,7 @@
             "server_name": "matrix.mamood.ir"
         },
         "m.identity_server": {
-            "base_url": "https://vector.im"
+            "base_url": ""
         }
     },
 
@@ -15,7 +15,7 @@
     "default_federate": false,
 
     "disable_custom_urls": true,
-    "disable_guests": true,
+    "disable_guests": false,
     "disable_3pid_login": true,
 
     "branding": {
@@ -55,7 +55,7 @@
     },
 
     "setting_defaults": {
-        "UIFeature.registration": true,
+        "UIFeature.registration": false,
         "show_timestamps_in_24h_format": true,
         "UIFeature.communities": true,
         "UIFeature.advancedSettings": true,
