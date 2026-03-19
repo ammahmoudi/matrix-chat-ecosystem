@@ -1,295 +1,197 @@
-# Mamood Chat — Matrix Server
+# Matrix Chat Ecosystem
 
-Private Matrix chat server for mamood.ir using Synapse + Element Web + MAS.
+A community-focused, self-hosted **Matrix chat ecosystem**: Synapse homeserver + Matrix Authentication Service (MAS) + web clients (Element & Cinny) + admin UIs + nginx reverse proxy + Postgres + optional ntfy push.
 
-This repo is designed to run a complete Matrix ecosystem (homeserver, auth, clients, admin panels)
-in an environment with limited or no outbound internet access.
+This repo is not a new homeserver implementation — it **assembles upstream projects** into a single deployable setup using Docker Compose, with practical configuration and notes for offline/isolated environments.
 
-## URLs
+## What’s included
 
-| Service | URL |
+| Service | Purpose |
 | --- | --- |
-| Chat (Element Web) | <https://chat.mamood.ir> |
-| Matrix API | <https://matrix.mamood.ir> |
-| Auth (MAS account page) | <https://auth.mamood.ir> |
-| Push notifications (ntfy) | <https://push.mamood.ir> |
-| MAS Admin Panel | <https://matrix.mamood.ir/mas-admin/> |
-| Synapse Admin Dashboard | <https://matrix.mamood.ir/synapse-admin/> |
+| Synapse | Matrix homeserver |
+| MAS (Matrix Authentication Service) | Login/registration/OIDC (next-gen auth) |
+| Element Web | Main web client |
+| Cinny | Alternative lightweight web client |
+| Synapse Admin | Admin dashboard for Synapse |
+| MAS Admin | Admin UI for MAS (users, tokens, sessions) |
+| nginx | Reverse proxy + routing (+ TLS in production) |
+| Postgres | Database backend (creates `matrix` + `mas`) |
+| ntfy (optional) | Self-hosted UnifiedPush provider (useful where FCM is unreliable/blocked) |
 
----
+## Example URLs (production)
 
-## Services
+You can host these on one domain or split them — this is only a typical mapping:
 
-| Container | Role |
+| Service | Example |
 | --- | --- |
-| `mamood-synapse` | Matrix homeserver (Synapse) |
-| `mamood-mas` | Matrix Authentication Service — handles login/register/OIDC |
-| `mamood-ntfy` | ntfy push server (UnifiedPush for Android) |
-| `mamood-element` | Element Web frontend |
-| `mamood-mas-admin` | MAS Admin Panel (React SPA served via nginx container) |
-| `mamood-nginx` | Reverse proxy + SSL |
-| `mamood-postgres` | PostgreSQL (databases: `matrix` + `mas`) |
-| `mamood-admin` | Synapse Admin UI |
+| Chat (Element Web) | `https://chat.example.com` |
+| Matrix API | `https://matrix.example.com` |
+| Auth (MAS account page) | `https://auth.example.com` |
+| Push (ntfy) | `https://push.example.com` |
+| MAS Admin Panel | `https://matrix.example.com/mas-admin/` |
+| Synapse Admin Dashboard | `https://matrix.example.com/synapse-admin/` |
 
----
+Configure the actual domains/paths in the nginx + Synapse + MAS configs.
 
-## Offline / Isolated Deployment Notes
+## Quick start (local)
 
-The target server is assumed to have **no outbound internet**.
+This repo includes a local override compose file for running on `localhost`:
 
-Do these steps on a connected machine (your laptop/workstation), then copy artifacts to the server.
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+```
+
+Local access:
+
+- Element: `http://localhost`
+- Synapse API (direct): `http://localhost:8008`
+- Synapse Admin (via nginx): `http://localhost/synapse-admin/`
+
+## First-time setup
+
+### 1) Create local config files
+
+This repo is intended to be public; secrets and instance-specific configs are kept out of git.
+
+```bash
+cp .env.example .env
+cp synapse/homeserver.yaml.example synapse/homeserver.yaml
+cp mas/config.yaml.example mas/config.yaml
+```
+
+Then edit:
+
+- `.env` (Postgres credentials)
+- `synapse/homeserver.yaml` (server name, public_baseurl, MAS integration, push settings)
+- `mas/config.yaml` (public_base, clients, policy)
+- `nginx/default.conf` (domains/routes) or `nginx/local.conf` (local)
+- `element/config.json` and `cinny/config.json` (homeserver URL, branding)
+
+### 2) Start the stack
+
+```bash
+mkdir -p synapse-data
+docker compose up -d --build
+```
+
+Linux hosts may need to ensure the Synapse data directory is writable by the container UID.
+
+## Offline / isolated deployments
+
+If your target host has limited/no outbound internet, do the heavy lifting on a connected machine and transfer artifacts.
 
 - Docker image preload/export/import: [docs/offline-docker-images.md](docs/offline-docker-images.md)
 - SSL (Certbot DNS challenge) + deploy to server: [docs/offline-ssl.md](docs/offline-ssl.md)
 - Registry mirror notes: [docs/offline-docker-mirrors.md](docs/offline-docker-mirrors.md)
 
-## Start / Stop
+## Common operations
 
 ```bash
-cd /opt/matrix-project
+docker compose ps
+docker compose logs -f synapse
+docker compose logs -f mas
 
-docker compose up -d           # start all
-docker compose down            # stop all
-docker compose restart         # restart all
-docker logs mamood-synapse -f  # watch Synapse logs
-docker logs mamood-mas -f      # watch MAS logs
+docker compose restart
+docker compose down
 ```
 
----
+## User management (via MAS)
 
-## First Time Setup (server)
-
-## Secrets / Local Config
-
-This repo is intended to be public. Real secrets are kept out of git:
-
-- Postgres credentials: set in `.env` (see `.env.example`).
-- Synapse config: `synapse/homeserver.yaml` (copy from `synapse/homeserver.yaml.example`).
-- MAS config: `mas/config.yaml` (copy from `mas/config.yaml.example`).
-
-Synapse Admin configuration is in `synapse-admin/config.json` (committed; not a secret).
-It supports options like `restrictBaseUrl` (homeserver restriction) and `externalAuthProvider` (MAS-friendly mode).
-
-These files are git-ignored.
-
-```bash
-mkdir -p synapse-data
-chown 991:991 synapse-data
-docker compose up -d
-```
-
-If the server is offline, make sure images are already loaded (see "Offline / Isolated Deployment Notes").
-
----
-
-## User Management (via MAS)
-
-Registration is handled by MAS — not Synapse. Synapse registration is disabled.
+Registration is handled by MAS (not Synapse). Synapse registration is typically disabled when using MAS.
 
 ### Create a registration token
 
 ```bash
 # Single-use token
-docker exec mamood-mas mas-cli manage create-registration-token --uses 1
+docker compose exec mas mas-cli manage create-registration-token --uses 1
 
-# Multi-use
-docker exec mamood-mas mas-cli manage create-registration-token --uses 10
+# Multi-use token
+docker compose exec mas mas-cli manage create-registration-token --uses 10
 
 # Unlimited uses
-docker exec mamood-mas mas-cli manage create-registration-token
+docker compose exec mas mas-cli manage create-registration-token
 ```
 
-Share with users:
- 
+Share an invite link like:
+
 ```text
-https://chat.mamood.ir/#/register?registration_token=TOKEN_HERE
+https://chat.example.com/#/register?registration_token=TOKEN_HERE
 ```
 
-### Other user commands
+### Other useful commands
 
 ```bash
-# List users
-docker exec mamood-mas mas-cli manage list-users
-
-# Promote user to MAS admin (can access auth.mamood.ir admin features)
-docker exec mamood-mas mas-cli manage promote-admin USERNAME
-
-# Lock a user
-docker exec mamood-mas mas-cli manage lock-user USERNAME
-
-# Set a user's password
-docker exec mamood-mas mas-cli manage set-password USERNAME
+docker compose exec mas mas-cli manage list-users
+docker compose exec mas mas-cli manage promote-admin USERNAME
+docker compose exec mas mas-cli manage lock-user USERNAME
+docker compose exec mas mas-cli manage set-password USERNAME
 ```
 
-### Create a Synapse admin user (for Synapse Admin dashboard)
+### Create a Synapse admin user (for Synapse Admin UI)
 
 ```bash
-docker exec -it mamood-synapse register_new_matrix_user \
+docker compose exec synapse register_new_matrix_user \
   -c /config/homeserver.yaml \
   -u admin -p YourStrongPassword --admin \
   http://localhost:8008
 ```
 
-Then open `https://matrix.mamood.ir/synapse-admin/` and log in with homeserver URL `https://matrix.mamood.ir`.
+Then open your Synapse Admin URL (for example `https://matrix.example.com/synapse-admin/`) and log in with your homeserver base URL.
 
----
+## Push notifications (UnifiedPush via ntfy)
 
-## Push Notifications (UnifiedPush via ntfy)
+This repo includes an optional ntfy service that can act as a UnifiedPush provider for Android clients (e.g. Element X).
 
-FCM/Firebase is blocked in Iran. We use [ntfy](https://ntfy.sh) as a self-hosted UnifiedPush provider.
+**Architecture (typical):**
 
-**Architecture:**
- 
 ```text
-Element X (Android) ←─ ntfy app ←─ ntfy server (push.mamood.ir)
-                                         ↑
-                                    Synapse (direct HTTP push)
+Android client  ←─ UnifiedPush distributor (ntfy app) ←─ ntfy server
+                                                     ↑
+                                                Synapse push
 ```
 
-iOS push works via Apple APNs natively — no extra setup needed.
+If you enable ntfy, make sure the Synapse push configuration and any hostnames in `docker-compose.yml` (for example `extra_hosts`) match your deployment.
 
-### Get the SSL cert
+## Admin panels
 
-See [docs/offline-ssl.md](docs/offline-ssl.md).
+- MAS Admin Panel: served by nginx at `/mas-admin/`
+- Synapse Admin: served by nginx at `/synapse-admin/`
 
-### Setup on server
-
-```bash
-docker compose up -d ntfy
-docker exec mamood-nginx nginx -s reload
-```
-
-### Setup on Android (user steps)
-
-1. Install **ntfy** app from [F-Droid](https://f-droid.org/packages/io.heckel.ntfy/) or Myket
-2. In ntfy app → Settings → Default server → set to `https://push.mamood.ir`
-3. Open **Element X** → Settings → Notifications → it will detect ntfy automatically as the UnifiedPush distributor
-4. Enable notifications in Element X — done
-
----
-
-## Admin Panels
-
-### MAS Admin Panel — `https://matrix.mamood.ir/mas-admin/`
-
-Custom React admin UI for MAS — users, registration tokens, sessions.
-
-- Sign in with your `amma` account (must be promoted to admin)
-- Create/revoke registration tokens with one click, copy invite links
-- Lock/unlock users, grant/revoke admin
-
-**Rebuild after config changes:**
+Rebuild MAS Admin after changing its source or build-time environment:
 
 ```bash
-# On server
 docker compose build mas-admin
 docker compose up -d mas-admin
 ```
 
-### Synapse Admin — `https://matrix.mamood.ir/synapse-admin/`
-
-- Rooms, media, federation, server stats
-- User listing (passwords/sessions managed by MAS now)
-
-### MAS CLI (for scripting)
+## Health check
 
 ```bash
-docker exec mamood-mas mas-cli --help
-docker exec mamood-mas mas-cli manage --help
+docker compose exec mas mas-cli doctor
 ```
 
----
-
-## Supported Client Apps
-
-| App | Platform | Login method |
-| --- | --- | --- |
-| Element Web | Browser | Password (via MAS compat) |
-| Element X | Android/iOS | Native OIDC via MAS |
-| FluffyChat | Android/iOS | Password (via MAS compat) or native OIDC |
-
----
-
-## SSL Certificates
-
-See [docs/offline-ssl.md](docs/offline-ssl.md).
-
----
-
-## Deploy Config Changes
-
-```powershell
-# From your laptop — copy changed files then reload
-scp nginx/default.conf root@178.239.151.162:/opt/matrix-project/nginx/default.conf
-scp mas/config.yaml root@178.239.151.162:/opt/matrix-project/mas/config.yaml
-scp synapse/homeserver.yaml root@178.239.151.162:/opt/matrix-project/synapse/homeserver.yaml
-```
-
-```bash
-# On server
-docker exec mamood-nginx nginx -s reload   # nginx changes (no downtime)
-docker restart mamood-mas                  # MAS config changes
-docker restart mamood-synapse              # Synapse config changes
-docker restart mamood-ntfy                 # ntfy config changes
-
-# Rebuild MAS Admin Panel (after changing mas-admin/ source or .env)
-docker compose build mas-admin && docker compose up -d mas-admin
-```
-
----
-
-## Health Check
-
-```bash
-docker exec mamood-mas mas-cli doctor
-```
-
-Expected: all green ✅. Known warning: well-known fetch may fail from inside the container (irrelevant, works from outside).
-
----
-
-## Files
+## Repo layout
 
 ```text
-matrix-project/
-├── docker-compose.yml          # all services
-├── artifacts/                  # offline bundles (not committed)
-│   ├── docker-images/          # docker save/load tarballs live here (gitignored)
+.
+├── docker-compose.yml
+├── docker-compose.local.yml
+├── .env.example
+├── artifacts/
+│   ├── docker-images/          # image tarballs for offline transfer (gitignored)
 │   └── docker-archives/        # optional archive storage (gitignored)
-├── docs/                       # operational docs (offline SSL, image preload, mirrors)
-├── nginx/default.conf          # routing + SSL + well-known
+├── docs/
+├── nginx/
 ├── synapse/
-│   ├── homeserver.yaml         # Synapse config (MAS enabled, registration disabled)
-│   ├── homeserver.example.yaml # Full option reference (generated from Synapse manual)
-│   └── synapse.log.config      # logging config
-├── repo-sources/               # local-only upstream clones (gitignored; see repo-sources/README.md)
 ├── mas/
-│   └── config.yaml             # MAS config (public_base, clients, policy, passwords)
-├── ntfy/
-│   └── server.yml              # ntfy push server config
-├── mas-admin/                  # MAS Admin Panel (React + Tailwind SPA)
-│   ├── src/                    # source code
-│   ├── Dockerfile              # builds and serves via nginx
-│   ├── .env                    # build config (gitignored) — copy from .env.example
-│   └── .env.example            # template
+├── mas-admin/
+├── element/
+├── cinny/
+├── synapse-admin/
 ├── postgres/
-│   └── init.sql                # creates `mas` database on first run
-└── element/
-    ├── config.json             # Element branding, homeserver, app download links
-    ├── welcome.html            # welcome page fragment (shown before login)
-    ├── home.html               # home page fragment (shown after login)
-    └── images/
-        ├── logo.svg            # app logo (also used as favicon)
-        └── logo.png            # favicon fallback
+└── ntfy/
 ```
 
----
+## Credits / upstream projects
 
-## Server Info
-
-- **Server IP:** 178.239.151.162
-- **Provider:** ParsPack
-- **Path:** `/opt/matrix-project/`
-- **DNS:** Cloudflare grey cloud (DNS only — no proxy, required for Iranian network)
-- **Docker mirror (Hub):** <https://dockerhub.iranserver.com>
-- **Docker mirror (ghcr.io):** <https://ghcr-mirror.liara.ir>
+This ecosystem is built from upstream components (Synapse, MAS, Element, Cinny, ntfy, nginx, Postgres, Synapse Admin). Each component is licensed and maintained by its respective authors — see their repositories and licenses for details.
