@@ -113,15 +113,14 @@ services:
       - matrix-net
 
   mas-admin:
-    build:
-      context: ./mas-admin
-      args:
-        VITE_MAS_BASE_URL: ${VITE_MAS_BASE_URL:-https://auth.mamood.ir}
-        VITE_CLIENT_ID: ${VITE_CLIENT_ID:-00000000000000000000000007}
-        VITE_REDIRECT_BASE: ${VITE_REDIRECT_BASE:-https://matrix.mamood.ir}
-        VITE_CHAT_BASE_URL: ${VITE_CHAT_BASE_URL:-https://chat.mamood.ir}
+    image: amahmoudi/mas-admin:latest
     container_name: mamood-mas-admin
     restart: unless-stopped
+    environment:
+      - MAS_ADMIN_MAS_BASE_URL=${MAS_ADMIN_MAS_BASE_URL:-https://auth.mamood.ir}
+      - MAS_ADMIN_CLIENT_ID=${MAS_ADMIN_CLIENT_ID:-00000000000000000000000007}
+      - MAS_ADMIN_REDIRECT_BASE=${MAS_ADMIN_REDIRECT_BASE:-https://matrix.mamood.ir}
+      - MAS_ADMIN_CHAT_BASE_URL=${MAS_ADMIN_CHAT_BASE_URL:-https://chat.mamood.ir}
     networks:
       - matrix-net
 
