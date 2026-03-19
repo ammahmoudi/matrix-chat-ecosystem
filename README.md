@@ -2,23 +2,26 @@
 
 Private Matrix chat server for mamood.ir using Synapse + Element Web + MAS.
 
+This repo is designed to run a complete Matrix ecosystem (homeserver, auth, clients, admin panels)
+in an environment with limited or no outbound internet access.
+
 ## URLs
 
 | Service | URL |
-|---|---|
-| Chat (Element Web) | https://chat.mamood.ir |
-| Matrix API | https://matrix.mamood.ir |
-| Auth (MAS account page) | https://auth.mamood.ir |
-| Push notifications (ntfy) | https://push.mamood.ir |
-| MAS Admin Panel | https://matrix.mamood.ir/mas-admin/ |
-| Synapse Admin Dashboard | http://matrix.mamood.ir:8080 |
+| --- | --- |
+| Chat (Element Web) | <https://chat.mamood.ir> |
+| Matrix API | <https://matrix.mamood.ir> |
+| Auth (MAS account page) | <https://auth.mamood.ir> |
+| Push notifications (ntfy) | <https://push.mamood.ir> |
+| MAS Admin Panel | <https://matrix.mamood.ir/mas-admin/> |
+| Synapse Admin Dashboard | <http://matrix.mamood.ir:8080> |
 
 ---
 
 ## Services
 
 | Container | Role |
-|---|---|
+| --- | --- |
 | `mamood-synapse` | Matrix homeserver (Synapse) |
 | `mamood-mas` | Matrix Authentication Service — handles login/register/OIDC |
 | `mamood-ntfy` | ntfy push server (UnifiedPush for Android) |
@@ -29,6 +32,16 @@ Private Matrix chat server for mamood.ir using Synapse + Element Web + MAS.
 | `mamood-admin` | Synapse Admin UI |
 
 ---
+
+## Offline / Isolated Deployment Notes
+
+The target server is assumed to have **no outbound internet**.
+
+Do these steps on a connected machine (your laptop/workstation), then copy artifacts to the server.
+
+- Docker image preload/export/import: [docs/offline-docker-images.md](docs/offline-docker-images.md)
+- SSL (Certbot DNS challenge) + deploy to server: [docs/offline-ssl.md](docs/offline-ssl.md)
+- Registry mirror notes: [docs/offline-docker-mirrors.md](docs/offline-docker-mirrors.md)
 
 ## Start / Stop
 
@@ -52,6 +65,8 @@ chown 991:991 synapse-data
 docker compose up -d
 ```
 
+If the server is offline, make sure images are already loaded (see "Offline / Isolated Deployment Notes").
+
 ---
 
 ## User Management (via MAS)
@@ -72,7 +87,8 @@ docker exec mamood-mas mas-cli manage create-registration-token
 ```
 
 Share with users:
-```
+ 
+```text
 https://chat.mamood.ir/#/register?registration_token=TOKEN_HERE
 ```
 
@@ -110,7 +126,8 @@ Then log into `http://matrix.mamood.ir:8080` with homeserver URL `http://matrix.
 FCM/Firebase is blocked in Iran. We use [ntfy](https://ntfy.sh) as a self-hosted UnifiedPush provider.
 
 **Architecture:**
-```
+ 
+```text
 Element X (Android) ←─ ntfy app ←─ ntfy server (push.mamood.ir)
                                          ↑
                                     Synapse (direct HTTP push)
@@ -120,20 +137,7 @@ iOS push works via Apple APNs natively — no extra setup needed.
 
 ### Get the SSL cert
 
-```powershell
-docker run --rm -it `
-  -v "$HOME/letsencrypt:/etc/letsencrypt" `
-  certbot/certbot certonly --manual --preferred-challenges dns `
-  --agree-tos --email am.mahmoudi@outlook.com `
-  -d push.mamood.ir
-```
-
-Add the DNS TXT record in Cloudflare, then deploy:
-
-```powershell
-scp -r "$HOME\letsencrypt\live\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
-```
+See [docs/offline-ssl.md](docs/offline-ssl.md).
 
 ### Setup on server
 
@@ -154,12 +158,15 @@ docker exec mamood-nginx nginx -s reload
 ## Admin Panels
 
 ### MAS Admin Panel — `https://matrix.mamood.ir/mas-admin/`
+
 Custom React admin UI for MAS — users, registration tokens, sessions.
+
 - Sign in with your `amma` account (must be promoted to admin)
 - Create/revoke registration tokens with one click, copy invite links
 - Lock/unlock users, grant/revoke admin
 
 **Rebuild after config changes:**
+
 ```bash
 # On server
 docker compose build mas-admin
@@ -167,10 +174,12 @@ docker compose up -d mas-admin
 ```
 
 ### Synapse Admin — `http://matrix.mamood.ir:8080`
+
 - Rooms, media, federation, server stats
 - User listing (passwords/sessions managed by MAS now)
 
 ### MAS CLI (for scripting)
+
 ```bash
 docker exec mamood-mas mas-cli --help
 docker exec mamood-mas mas-cli manage --help
@@ -181,7 +190,7 @@ docker exec mamood-mas mas-cli manage --help
 ## Supported Client Apps
 
 | App | Platform | Login method |
-|---|---|---|
+| --- | --- | --- |
 | Element Web | Browser | Password (via MAS compat) |
 | Element X | Android/iOS | Native OIDC via MAS |
 | FluffyChat | Android/iOS | Password (via MAS compat) or native OIDC |
@@ -190,66 +199,7 @@ docker exec mamood-mas mas-cli manage --help
 
 ## SSL Certificates
 
-Certs live on the server at `/etc/letsencrypt/live/`.
-Server has no internet — issue certs on your laptop with Docker.
-
-### Issue / renew (on your laptop)
-
-```powershell
-# chat.mamood.ir and matrix.mamood.ir
-docker run --rm -it `
-  -v "$HOME/letsencrypt:/etc/letsencrypt" `
-  certbot/certbot certonly --manual --preferred-challenges dns `
-  --agree-tos --email am.mahmoudi@outlook.com `
-  -d chat.mamood.ir -d matrix.mamood.ir
-
-# auth.mamood.ir (separate cert)
-docker run --rm -it `
-  -v "$HOME/letsencrypt:/etc/letsencrypt" `
-  certbot/certbot certonly --manual --preferred-challenges dns `
-  --agree-tos --email am.mahmoudi@outlook.com `
-  -d auth.mamood.ir
-
-# push.mamood.ir (separate cert)
-docker run --rm -it `
-  -v "$HOME/letsencrypt:/etc/letsencrypt" `
-  certbot/certbot certonly --manual --preferred-challenges dns `
-  --agree-tos --email am.mahmoudi@outlook.com `
-  -d push.mamood.ir
-```
-
-For each: add the `_acme-challenge` TXT record shown in Cloudflare, wait ~30s, press Enter.
-
-### Deploy to server
-
-```powershell
-# Copy live + archive dirs for each domain
-scp -r "$HOME\letsencrypt\live\chat.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\chat.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
-
-scp -r "$HOME\letsencrypt\live\matrix.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\matrix.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
-
-scp -r "$HOME\letsencrypt\live\auth.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\auth.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
-
-scp -r "$HOME\letsencrypt\live\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
-```
-
-```bash
-# On server — reload nginx
-docker exec mamood-nginx nginx -s reload
-```
-
-Certs expire every **90 days**.
-
-| Domain | Issued | Expires |
-|---|---|---|
-| chat.mamood.ir | — | check with `openssl s_client` |
-| matrix.mamood.ir | — | check with `openssl s_client` |
-| auth.mamood.ir | 2026-03-17 | 2026-06-15 |
-| push.mamood.ir | 2026-03-17 | 2026-06-15 |
+See [docs/offline-ssl.md](docs/offline-ssl.md).
 
 ---
 
@@ -287,13 +237,19 @@ Expected: all green ✅. Known warning: well-known fetch may fail from inside th
 
 ## Files
 
-```
+```text
 matrix-project/
 ├── docker-compose.yml          # all services
+├── artifacts/                  # offline bundles (not committed)
+│   ├── docker-images/          # docker save/load tarballs live here (gitignored)
+│   └── docker-archives/        # optional archive storage (gitignored)
+├── docs/                       # operational docs (offline SSL, image preload, mirrors)
 ├── nginx/default.conf          # routing + SSL + well-known
 ├── synapse/
 │   ├── homeserver.yaml         # Synapse config (MAS enabled, registration disabled)
+│   ├── homeserver.example.yaml # Full option reference (generated from Synapse manual)
 │   └── synapse.log.config      # logging config
+├── repo-sources/               # local-only upstream clones (gitignored; see repo-sources/README.md)
 ├── mas/
 │   └── config.yaml             # MAS config (public_base, clients, policy, passwords)
 ├── ntfy/
@@ -322,5 +278,5 @@ matrix-project/
 - **Provider:** ParsPack
 - **Path:** `/opt/matrix-project/`
 - **DNS:** Cloudflare grey cloud (DNS only — no proxy, required for Iranian network)
-- **Docker mirror (Hub):** https://dockerhub.iranserver.com
-- **Docker mirror (ghcr.io):** https://ghcr-mirror.liara.ir
+- **Docker mirror (Hub):** <https://dockerhub.iranserver.com>
+- **Docker mirror (ghcr.io):** <https://ghcr-mirror.liara.ir>

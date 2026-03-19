@@ -1,3 +1,3 @@
 [submodule "mas-admin"]
 	path = mas-admin
-	url = ./repo-sources/mas-admin.git
+	url = https://github.com/ammahmoudi/matrix-authentication-service-admin.git

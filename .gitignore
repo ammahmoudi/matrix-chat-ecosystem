@@ -1,5 +1,33 @@
 *.tar
 *.tar.gz
+*.tgz
 .env
 mas-admin/.env
 synapse-data/
+
+# Node / build outputs
+**/node_modules/
+mas-admin/dist/
+
+# Runtime data (created on the server)
+postgres-data/
+
+# Upstream sources (clone locally; keep only repo-sources/README.md in git)
+repo-sources/*
+!repo-sources/README.md
+
+# Offline artifacts (keep docs/structure, but never commit large bundles)
+artifacts/docker-images/*
+artifacts/docker-archives/*
+
+# Local-only large files (kept for offline context)
+spec.json
+
+# Local debugging logs
+submodule-add.log
+
+# Legacy local source folders (use repo-sources/ instead)
+synapse-src/
+element-web-src/
+repo-sources/
+ssl-certs/

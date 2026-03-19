@@ -1,6 +1,6 @@
 # ==============================================================================
 # Synapse FULL reference homeserver config (latest manual)
-# Source: synapse-src/docs/usage/configuration/config_documentation.md
+# Source: repo-sources/synapse-src/docs/usage/configuration/config_documentation.md
 # Generated: 2026-03-19 12:08:16
 #
 # This file is a reference: it contains EVERY supported top-level option documented
