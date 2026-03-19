@@ -93,6 +93,15 @@ services:
     networks:
       - matrix-net
 
+  cinny:
+    image: ajbura/cinny:latest
+    container_name: mamood-cinny
+    restart: unless-stopped
+    volumes:
+      - ./cinny/config.json:/app/config.json
+    networks:
+      - matrix-net
+
   mas-admin:
     build:
       context: ./mas-admin
@@ -125,6 +134,8 @@ services:
       synapse-admin:
         condition: service_started
       mas-admin:
+        condition: service_started
+      cinny:
         condition: service_started
       ntfy:
         condition: service_started

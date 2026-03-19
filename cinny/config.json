@@ -1,0 +1,10 @@
+{
+  "defaultHomeserver": 0,
+  "homeserverList": ["matrix.mamood.ir"],
+  "allowCustomHomeservers": false,
+
+  "hashRouter": {
+    "enabled": false,
+    "basename": "/"
+  }
+}
