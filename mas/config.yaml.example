@@ -1,5 +1,5 @@
 # Example MAS configuration (SAFE TO COMMIT)
-# Copy to mas/config.yaml.local and fill secrets.
+# Copy to mas/config.yaml and fill secrets.
 
 http:
   public_base: "https://auth.mamood.ir/"
@@ -33,7 +33,7 @@ secrets:
 matrix:
   homeserver: "matrix.mamood.ir"
   endpoint: "http://synapse:8008"
-  # MUST match synapse/homeserver.yaml.local -> matrix_authentication_service.secret
+  # MUST match synapse/homeserver.yaml -> matrix_authentication_service.secret
   secret: "CHANGE_ME"
 
 passwords:
