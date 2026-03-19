@@ -14,7 +14,7 @@ in an environment with limited or no outbound internet access.
 | Auth (MAS account page) | <https://auth.mamood.ir> |
 | Push notifications (ntfy) | <https://push.mamood.ir> |
 | MAS Admin Panel | <https://matrix.mamood.ir/mas-admin/> |
-| Synapse Admin Dashboard | <http://matrix.mamood.ir:8080> |
+| Synapse Admin Dashboard | <https://matrix.mamood.ir/synapse-admin/> |
 
 ---
 
@@ -58,6 +58,16 @@ docker logs mamood-mas -f      # watch MAS logs
 ---
 
 ## First Time Setup (server)
+
+## Secrets / Local Config
+
+This repo is intended to be public. Real secrets are kept out of git:
+
+- Postgres credentials: set in `.env` (see `.env.example`).
+- Synapse config: `synapse/homeserver.yaml.local` (copy from `synapse/homeserver.yaml.example`).
+- MAS config: `mas/config.yaml.local` (copy from `mas/config.yaml.example`).
+
+These `*.local` files are git-ignored.
 
 ```bash
 mkdir -p synapse-data
@@ -117,7 +127,7 @@ docker exec -it mamood-synapse register_new_matrix_user \
   http://localhost:8008
 ```
 
-Then log into `http://matrix.mamood.ir:8080` with homeserver URL `http://matrix.mamood.ir`.
+Then open `https://matrix.mamood.ir/synapse-admin/` and log in with homeserver URL `https://matrix.mamood.ir`.
 
 ---
 
@@ -173,7 +183,7 @@ docker compose build mas-admin
 docker compose up -d mas-admin
 ```
 
-### Synapse Admin — `http://matrix.mamood.ir:8080`
+### Synapse Admin — `https://matrix.mamood.ir/synapse-admin/`
 
 - Rooms, media, federation, server stats
 - User listing (passwords/sessions managed by MAS now)

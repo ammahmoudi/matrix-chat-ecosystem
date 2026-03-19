@@ -4,9 +4,9 @@ services:
     container_name: mamood-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=client
-      - POSTGRES_PASSWORD=REDACTED
-      - POSTGRES_DB=matrix
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -27,8 +27,8 @@ services:
     environment:
       - MAS_CONFIG=/config/config.yaml
     volumes:
-      - ./mas/config.yaml:/config/config.yaml
-      - ./synapse/homeserver.yaml:/synapse/homeserver.yaml:ro
+      - ./mas/config.yaml.local:/config/config.yaml
+      - ./synapse/homeserver.yaml.local:/synapse/homeserver.yaml:ro
       - mas-data:/data
     depends_on:
       postgres:
@@ -54,7 +54,7 @@ services:
       retries: 5
     volumes:
       - ./synapse-data:/data
-      - ./synapse/homeserver.yaml:/config/homeserver.yaml
+      - ./synapse/homeserver.yaml.local:/config/homeserver.yaml
       - ./synapse/synapse.log.config:/config/synapse.log.config
     networks:
       - matrix-net
@@ -72,8 +72,21 @@ services:
     networks:
       - matrix-net
 
+  # synapse-admin (legacy upstream):
+  #   image: awesometechnologies/synapse-admin:latest
+  #   container_name: mamood-admin
+  #   restart: unless-stopped
+  #   networks:
+  #     - matrix-net
+
+  # synapse-admin (etkecc fork): served via nginx at https://matrix.mamood.ir/synapse-admin/
   synapse-admin:
-    image: awesometechnologies/synapse-admin:latest
+    build:
+      context: ./repo-sources/synapse-admin/etkecc
+      dockerfile: Dockerfile.build
+      args:
+        BASE_PATH: "/synapse-admin"
+    image: etkecc/synapse-admin:local
     container_name: mamood-admin
     restart: unless-stopped
     networks:
@@ -122,7 +135,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"    # Synapse Admin
+      - "8080:8080"    # legacy Synapse Admin port (now redirects)
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - /etc/letsencrypt:/etc/letsencrypt

@@ -1,0 +1,70 @@
+# Example Synapse configuration (SAFE TO COMMIT)
+# Copy to synapse/homeserver.yaml.local and fill secrets.
+
+server_name: "matrix.mamood.ir"
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 8008
+    resources:
+    - compress: false
+      names:
+      - client
+    tls: false
+    type: http
+    x_forwarded: true
+
+database:
+  name: psycopg2
+  args:
+    user: client
+    password: "CHANGE_ME"  # must match POSTGRES_PASSWORD
+    database: matrix
+    host: postgres
+    cp_min: 5
+    cp_max: 10
+
+log_config: "/config/synapse.log.config"
+media_store_path: /data/media_store
+max_upload_size: "100M"
+
+# Registration disabled; MAS handles auth.
+enable_registration: false
+registration_requires_token: true
+enable_registration_without_verification: true
+registration_shared_secret: "CHANGE_ME"  # shared-secret registration API
+
+report_stats: false
+macaroon_secret_key: "CHANGE_ME"
+form_secret: "CHANGE_ME"
+signing_key_path: "/data/matrix.mamood.ir.signing.key"
+
+# Shared secret between Synapse and MAS: MUST match mas/config.yaml.local
+matrix_authentication_service:
+  enabled: true
+  endpoint: "http://mas:8090"
+  secret: "CHANGE_ME"
+
+federation_domain_whitelist: []
+
+presence:
+  enabled: true
+
+url_preview_enabled: true
+
+ip_range_whitelist:
+  - '172.17.0.0/16'
+
+url_preview_ip_range_blacklist:
+  - '127.0.0.0/8'
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+  - '100.64.0.0/10'
+  - '169.254.0.0/16'
+  - '::1/128'
+  - 'fe80::/64'
+  - 'fc00::/7'
+
+auto_join_rooms:
+  - "#general:matrix.mamood.ir"

@@ -1,0 +1,103 @@
+# Example MAS configuration (SAFE TO COMMIT)
+# Copy to mas/config.yaml.local and fill secrets.
+
+http:
+  public_base: "https://auth.mamood.ir/"
+  listeners:
+    - name: web
+      resources:
+        - name: discovery
+        - name: human
+        - name: oauth
+        - name: compat
+        - name: graphql
+          playground: false
+        - name: assets
+        - name: adminapi
+      binds:
+        - address: "[::]:8090"
+      proxy_protocol: false
+
+database:
+  uri: "postgresql://client:CHANGE_ME@postgres/mas"  # password must match POSTGRES_PASSWORD
+
+secrets:
+  # Generate with: openssl rand -hex 32
+  encryption: "CHANGE_ME"
+  keys:
+    - key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        CHANGE_ME
+        -----END RSA PRIVATE KEY-----
+
+matrix:
+  homeserver: "matrix.mamood.ir"
+  endpoint: "http://synapse:8008"
+  # MUST match synapse/homeserver.yaml.local -> matrix_authentication_service.secret
+  secret: "CHANGE_ME"
+
+passwords:
+  enabled: true
+  schemes:
+    - version: 1
+      algorithm: bcrypt
+      unicode_normalization: true
+    - version: 2
+      algorithm: argon2id
+
+account:
+  password_registration_enabled: true
+  password_registration_email_required: false
+  password_recovery_enabled: false
+  email_change_allowed: false
+  login_with_email_allowed: false
+  account_deactivation_allowed: true
+  registration_token_required: true
+
+policy:
+  data:
+    allow_registration: true
+    admin_clients:
+      - "00000000000000000000000004"
+      - "00000000000000000000000007"
+
+email:
+  from: '"Mamoox" <noreply@matrix.mamood.ir>'
+  transport: blackhole
+
+clients:
+  - client_id: "00000000000000000000000001"
+    client_auth_method: client_secret_post
+    client_secret: "CHANGE_ME"
+    redirect_uris:
+      - "https://matrix.mamood.ir/_synapse/client/oidc/callback"
+
+  - client_id: "00000000000000000000000002"
+    client_auth_method: none
+    redirect_uris:
+      - "io.element:/callback"
+      - "io.element.x:/callback"
+      - "io.element.android.x:/callback"
+
+  - client_id: "00000000000000000000000003"
+    client_auth_method: none
+    redirect_uris:
+      - "https://chat.mamood.ir/"
+      - "https://chat.mamood.ir/index.html"
+
+  - client_id: "00000000000000000000000005"
+    client_auth_method: none
+    redirect_uris:
+      - "im.fluffychat://login"
+      - "io.element.fluffychat:/login"
+
+  - client_id: "00000000000000000000000004"
+    client_auth_method: client_secret_basic
+    client_secret: "CHANGE_ME"
+    redirect_uris:
+      - "https://auth.mamood.ir/api/doc/oauth2-callback"
+
+  - client_id: "00000000000000000000000007"
+    client_auth_method: none
+    redirect_uris:
+      - "https://matrix.mamood.ir/mas-admin/callback"

@@ -16,7 +16,7 @@ docker pull postgres:15-alpine
 docker pull ghcr.io/element-hq/matrix-authentication-service:latest
 docker pull matrixdotorg/synapse:latest
 docker pull vectorim/element-web:latest
-docker pull awesometechnologies/synapse-admin:latest
+# synapse-admin is now built locally from repo-sources/synapse-admin/etkecc
 docker pull binwiederhier/ntfy
 docker pull ajbura/cinny:latest
 docker pull nginx:latest
@@ -24,11 +24,11 @@ docker pull nginx:latest
 
 ## 2) Build images that need internet during build
 
-`mas-admin` is built from local source and will download npm dependencies at build time.
-Build it on a connected machine:
+`mas-admin` and `synapse-admin` are built from local source and will download dependencies at build time.
+Build them on a connected machine:
 
 ```bash
-docker compose build mas-admin
+docker compose build mas-admin synapse-admin
 ```
 
 ## 3) Export images to tar files
@@ -43,18 +43,21 @@ docker save -o artifacts/docker-images/matrix-images.tar \
   ghcr.io/element-hq/matrix-authentication-service:latest \
   matrixdotorg/synapse:latest \
   vectorim/element-web:latest \
-  awesometechnologies/synapse-admin:latest \
   binwiederhier/ntfy \
   ajbura/cinny:latest \
   nginx:latest
 ```
 
-Export the locally built `mas-admin` image:
+Export the locally built `mas-admin` and `synapse-admin` images:
 
 ```bash
 docker image ls | grep mas-admin
 # then:
 docker save -o artifacts/docker-images/mas-admin-image.tar <THE_IMAGE_TAG_FROM_ABOVE>
+
+docker image ls | egrep "(synapse-admin|etkecc/synapse-admin)"
+# then:
+docker save -o artifacts/docker-images/synapse-admin-image.tar <THE_IMAGE_TAG_FROM_ABOVE>
 ```
 
 ## 4) Transfer to the server
@@ -70,6 +73,7 @@ cd /opt/matrix-project
 
 docker load -i artifacts/docker-images/matrix-images.tar
 docker load -i artifacts/docker-images/mas-admin-image.tar
+docker load -i artifacts/docker-images/synapse-admin-image.tar
 ```
 
 From this point, `docker compose up -d` should start without pulling, as long as the images exist locally.

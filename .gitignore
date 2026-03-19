@@ -4,6 +4,7 @@
 .env
 mas-admin/.env
 synapse-data/
+**/*.local
 
 # Node / build outputs
 **/node_modules/
@@ -15,6 +16,9 @@ postgres-data/
 # Upstream sources (clone locally; keep only repo-sources/README.md in git)
 repo-sources/*
 !repo-sources/README.md
+
+# (typo folder) - keep out of git
+repo-soruces/
 
 # Offline artifacts (keep docs/structure, but never commit large bundles)
 artifacts/docker-images/*
