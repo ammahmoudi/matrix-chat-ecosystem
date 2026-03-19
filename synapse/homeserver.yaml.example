@@ -10,6 +10,7 @@ listeners:
     - compress: false
       names:
       - client
+      - federation
     tls: false
     type: http
     x_forwarded: true
@@ -45,7 +46,12 @@ matrix_authentication_service:
   endpoint: "http://mas:8090"
   secret: "CHANGE_ME"
 
+# Federation allowlist (private federation).
+# Leave empty to block all federation, or list allowed domains.
 federation_domain_whitelist: []
+# Example:
+# federation_domain_whitelist:
+#   - "matrix.figgaro.ir"
 # Don't expose this server's public room directory.
 allow_public_rooms_without_auth: false
 allow_public_rooms_over_federation: false
