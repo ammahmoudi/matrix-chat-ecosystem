@@ -27,8 +27,8 @@ services:
     environment:
       - MAS_CONFIG=/config/config.yaml
     volumes:
-      - ./mas/config.yaml.local:/config/config.yaml
-      - ./synapse/homeserver.yaml.local:/synapse/homeserver.yaml:ro
+      - ./mas/config.yaml:/config/config.yaml
+      - ./synapse/homeserver.yaml:/synapse/homeserver.yaml:ro
       - mas-data:/data
     depends_on:
       postgres:
@@ -54,7 +54,7 @@ services:
       retries: 5
     volumes:
       - ./synapse-data:/data
-      - ./synapse/homeserver.yaml.local:/config/homeserver.yaml
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml
       - ./synapse/synapse.log.config:/config/synapse.log.config
     networks:
       - matrix-net

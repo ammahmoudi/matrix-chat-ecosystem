@@ -64,10 +64,10 @@ docker logs mamood-mas -f      # watch MAS logs
 This repo is intended to be public. Real secrets are kept out of git:
 
 - Postgres credentials: set in `.env` (see `.env.example`).
-- Synapse config: `synapse/homeserver.yaml.local` (copy from `synapse/homeserver.yaml.example`).
-- MAS config: `mas/config.yaml.local` (copy from `mas/config.yaml.example`).
+- Synapse config: `synapse/homeserver.yaml` (copy from `synapse/homeserver.yaml.example`).
+- MAS config: `mas/config.yaml` (copy from `mas/config.yaml.example`).
 
-These `*.local` files are git-ignored.
+These files are git-ignored.
 
 ```bash
 mkdir -p synapse-data

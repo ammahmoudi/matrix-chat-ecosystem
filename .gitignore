@@ -4,7 +4,10 @@
 .env
 mas-admin/.env
 synapse-data/
-**/*.local
+
+# Secret configs (keep local, do NOT commit)
+synapse/homeserver.yaml
+mas/config.yaml
 
 # Node / build outputs
 **/node_modules/
