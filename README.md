@@ -67,6 +67,9 @@ This repo is intended to be public. Real secrets are kept out of git:
 - Synapse config: `synapse/homeserver.yaml` (copy from `synapse/homeserver.yaml.example`).
 - MAS config: `mas/config.yaml` (copy from `mas/config.yaml.example`).
 
+Synapse Admin configuration is in `synapse-admin/config.json` (committed; not a secret).
+It supports options like `restrictBaseUrl` (homeserver restriction) and `externalAuthProvider` (MAS-friendly mode).
+
 These files are git-ignored.
 
 ```bash

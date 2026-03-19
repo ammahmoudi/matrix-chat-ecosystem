@@ -81,14 +81,11 @@ services:
 
   # synapse-admin (etkecc fork): served via nginx at https://matrix.mamood.ir/synapse-admin/
   synapse-admin:
-    build:
-      context: ./repo-sources/synapse-admin/etkecc
-      dockerfile: Dockerfile.build
-      args:
-        BASE_PATH: "/synapse-admin"
-    image: etkecc/synapse-admin:local
+    image: etkecc/synapse-admin:latest
     container_name: mamood-admin
     restart: unless-stopped
+    volumes:
+      - ./synapse-admin/config.json:/var/public/config.json:ro
     networks:
       - matrix-net
 
