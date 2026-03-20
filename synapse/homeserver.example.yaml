@@ -49,7 +49,7 @@ modules:
 
 server_name: matrix.org
 
-server_name: localhost:8080
+# server_name: localhost:8080
 
 # ------------------------------------------------------------------------------
 # OPTION: pid_file
@@ -269,7 +269,7 @@ allow_public_rooms_over_federation: true
 #
 # Example configuration:
 
-default_room_version: '8'
+default_room_version: '10'
 
 # ------------------------------------------------------------------------------
 # OPTION: gc_thresholds
@@ -294,10 +294,6 @@ gc_thresholds:
 #
 # Example configuration:
 
-gc_min_interval:
-- 1s
-- 10s
-- 30s
 
 gc_min_interval:
 - 0.5s
@@ -469,36 +465,36 @@ listeners:
     - client
     - federation
 
-listeners:
-- port: 8008
-  tls: false
-  type: http
-  x_forwarded: true
-  bind_addresses:
-  - ::1
-  - 127.0.0.1
-  resources:
-  - names:
-    - client
-    - federation
-    compress: false
-  additional_resources:
-    /_matrix/my/custom/endpoint:
-      module: my_module.CustomRequestHandler
-      config: {}
-- port: 9000
-  bind_addresses:
-  - ::1
-  - 127.0.0.1
-  type: manhole
+# listeners:
+# - port: 8008
+#   tls: false
+#   type: http
+#   x_forwarded: true
+#   bind_addresses:
+#   - ::1
+#   - 127.0.0.1
+#   resources:
+#   - names:
+#     - client
+#     - federation
+#     compress: false
+#   additional_resources:
+#     /_matrix/my/custom/endpoint:
+#       module: my_module.CustomRequestHandler
+#       config: {}
+# - port: 9000
+#   bind_addresses:
+#   - ::1
+#   - 127.0.0.1
+#   type: manhole
 
-listeners:
-- path: /run/synapse/main_public.sock
-  type: http
-  resources:
-  - names:
-    - client
-    - federation
+# listeners:
+# - path: /run/synapse/main_public.sock
+#   type: http
+#   resources:
+#   - names:
+#     - client
+#     - federation
 
 # ------------------------------------------------------------------------------
 # OPTION: manhole
@@ -1418,10 +1414,10 @@ caches:
 # Example configurations:
 #
 
-database:
-  name: sqlite3
-  args:
-    database: /path/to/homeserver.db
+# database:
+#   name: sqlite3
+#   args:
+#     database: /path/to/homeserver.db
 
 database:
   name: psycopg2
@@ -1546,9 +1542,9 @@ rc_message:
   per_second: 0.2
   burst_count: 10.0
 
-rc_message:
-  per_second: 0.5
-  burst_count: 15.0
+# rc_message:
+#   per_second: 0.5
+#   burst_count: 15.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_registration
@@ -1570,9 +1566,9 @@ rc_registration:
   per_second: 0.17
   burst_count: 3.0
 
-rc_registration:
-  per_second: 0.15
-  burst_count: 2.0
+# rc_registration:
+#   per_second: 0.15
+#   burst_count: 2.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_registration_token_validity
@@ -1594,9 +1590,9 @@ rc_registration_token_validity:
   per_second: 0.1
   burst_count: 5.0
 
-rc_registration_token_validity:
-  per_second: 0.3
-  burst_count: 6.0
+# rc_registration_token_validity:
+#   per_second: 0.3
+#   burst_count: 6.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_login
@@ -1717,9 +1713,9 @@ rc_joins_per_room:
   per_second: 1.0
   burst_count: 10.0
 
-rc_joins_per_room:
-  per_second: 1.0
-  burst_count: 10.0
+# rc_joins_per_room:
+#   per_second: 1.0
+#   burst_count: 10.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_3pid_validation
@@ -1741,9 +1737,9 @@ rc_3pid_validation:
   per_second: 0.003
   burst_count: 5.0
 
-rc_3pid_validation:
-  per_second: 0.003
-  burst_count: 5.0
+# rc_3pid_validation:
+#   per_second: 0.003
+#   burst_count: 5.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_invites
@@ -1887,10 +1883,10 @@ rc_presence:
     per_second: 0.1
     burst_count: 1.0
 
-rc_presence:
-  per_user:
-    per_second: 0.05
-    burst_count: 1.0
+# rc_presence:
+  # per_user:
+  #   per_second: 0.05
+  #   burst_count: 1.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_delayed_event_mgmt
@@ -1918,9 +1914,9 @@ rc_delayed_event_mgmt:
   per_second: 1.0
   burst_count: 5.0
 
-rc_delayed_event_mgmt:
-  per_second: 2.0
-  burst_count: 20.0
+# rc_delayed_event_mgmt:
+#   per_second: 2.0
+#   burst_count: 20.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_reports
@@ -1944,9 +1940,9 @@ rc_reports:
   per_second: 1.0
   burst_count: 5.0
 
-rc_reports:
-  per_second: 2.0
-  burst_count: 20.0
+# rc_reports:
+#   per_second: 2.0
+#   burst_count: 20.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_room_creation
@@ -1968,9 +1964,9 @@ rc_room_creation:
   per_second: 0.016
   burst_count: 10.0
 
-rc_room_creation:
-  per_second: 1.0
-  burst_count: 5.0
+# rc_room_creation:
+#   per_second: 1.0
+#   burst_count: 5.0
 
 # ------------------------------------------------------------------------------
 # OPTION: rc_user_directory
@@ -2377,11 +2373,11 @@ max_spider_size: 8M
 url_preview_accept_language:
 - en
 
-url_preview_accept_language:
-- en-UK
-- en-US;q=0.9
-- fr;q=0.8
-- '*;q=0.7'
+# url_preview_accept_language:
+# - en-UK
+# - en-US;q=0.9
+# - fr;q=0.8
+# - '*;q=0.7'
 
 # ------------------------------------------------------------------------------
 # OPTION: oembed
@@ -4078,23 +4074,23 @@ enable_room_list_search: false
 
 alias_creation_rules: null
 
-alias_creation_rules:
-- action: allow
+# alias_creation_rules:
+# - action: allow
 
-alias_creation_rules: []
+# alias_creation_rules: []
 
-alias_creation_rules:
-- action: deny
+# alias_creation_rules:
+# - action: deny
 
-alias_creation_rules:
-- user_id: '@bad_user:example.com'
-  action: deny
-- action: allow
+# alias_creation_rules:
+# - user_id: '@bad_user:example.com'
+#   action: deny
+# - action: allow
 
-alias_creation_rules:
-- room_id: '!forbiddenRoom:example.com'
-  action: deny
-- action: allow
+# alias_creation_rules:
+# - room_id: '!forbiddenRoom:example.com'
+#   action: deny
+# - action: allow
 
 # ------------------------------------------------------------------------------
 # OPTION: room_list_publication_rules
@@ -4134,28 +4130,28 @@ alias_creation_rules:
 
 room_list_publication_rules: null
 
-room_list_publication_rules:
-- action: deny
+# room_list_publication_rules:
+# - action: deny
 
-room_list_publication_rules: []
+# room_list_publication_rules: []
 
-room_list_publication_rules:
-- action: allow
+# room_list_publication_rules:
+# - action: allow
 
-room_list_publication_rules:
-- user_id: '@bad_user:example.com'
-  action: deny
-- action: allow
+# room_list_publication_rules:
+# - user_id: '@bad_user:example.com'
+#   action: deny
+# - action: allow
 
-room_list_publication_rules:
-- room_id: '!forbiddenRoom:example.com'
-  action: deny
-- action: allow
+# room_list_publication_rules:
+# - room_id: '!forbiddenRoom:example.com'
+#   action: deny
+# - action: allow
 
-room_list_publication_rules:
-- alias: '#*potato*:example.com'
-  action: deny
-- action: allow
+# room_list_publication_rules:
+# - alias: '#*potato*:example.com'
+#   action: deny
+# - action: allow
 
 # ------------------------------------------------------------------------------
 # OPTION: default_power_level_content_override
@@ -4192,20 +4188,20 @@ default_power_level_content_override:
   trusted_private_chat: null
   public_chat: null
 
-default_power_level_content_override:
-  private_chat:
-    events:
-      com.example.foo: 0
-      m.room.name: 50
-      m.room.power_levels: 100
-      m.room.history_visibility: 100
-      m.room.canonical_alias: 50
-      m.room.avatar: 50
-      m.room.tombstone: 100
-      m.room.server_acl: 100
-      m.room.encryption: 100
-  trusted_private_chat: null
-  public_chat: null
+# default_power_level_content_override:
+#   private_chat:
+#     events:
+#       com.example.foo: 0
+#       m.room.name: 50
+#       m.room.power_levels: 100
+#       m.room.history_visibility: 100
+#       m.room.canonical_alias: 50
+#       m.room.avatar: 50
+#       m.room.tombstone: 100
+#       m.room.server_acl: 100
+#       m.room.encryption: 100
+#   trusted_private_chat: null
+#   public_chat: null
 
 # ------------------------------------------------------------------------------
 # OPTION: forget_rooms_on_leave
@@ -4314,8 +4310,6 @@ start_pushers: false
 # Example configurations:
 #
 
-pusher_instances:
-- pusher_worker1
 
 pusher_instances:
 - pusher_worker1
@@ -4352,9 +4346,6 @@ send_federation: false
 
 federation_sender_instances:
 - federation_sender1
-
-federation_sender_instances:
-- federation_sender1
 - federation_sender2
 
 # ------------------------------------------------------------------------------
@@ -4378,11 +4369,11 @@ instance_map:
     port: 8035
     tls: true
 
-instance_map:
-  main:
-    path: /run/synapse/main_replication.sock
-  worker1:
-    path: /run/synapse/worker1_replication.sock
+# instance_map:
+#   main:
+#     path: /run/synapse/main_replication.sock
+#   worker1:
+#     path: /run/synapse/worker1_replication.sock
 
 # ------------------------------------------------------------------------------
 # OPTION: stream_writers
@@ -4584,18 +4575,18 @@ worker_listeners:
     - client
     - federation
 
-worker_listeners:
-- type: http
-  path: /run/synapse/worker_replication.sock
-  resources:
-  - names:
-    - replication
-- type: http
-  path: /run/synapse/worker_public.sock
-  resources:
-  - names:
-    - client
-    - federation
+# worker_listeners:
+# - type: http
+#   path: /run/synapse/worker_replication.sock
+#   resources:
+#   - names:
+#     - replication
+# - type: http
+#   path: /run/synapse/worker_public.sock
+#   resources:
+#   - names:
+#     - client
+#     - federation
 
 # ------------------------------------------------------------------------------
 # OPTION: worker_manhole
@@ -4611,10 +4602,10 @@ worker_listeners:
 #
 # Example configuration:
 
-worker_listeners:
-  - port: 9000
-    bind_addresses: ['127.0.0.1']
-    type: manhole
+# worker_listeners:
+#   - port: 9000
+#     bind_addresses: ['127.0.0.1']
+#     type: manhole
 
 worker_manhole: 9000
 
