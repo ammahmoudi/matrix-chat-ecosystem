@@ -1,4 +1,6 @@
 # Local HTTP-only nginx config (no SSL, no domain names)
+# Copy to local.conf — no changes needed, works as-is for local dev.
+#
 # Element:       http://localhost
 # Matrix API:    http://localhost/matrix/ (proxied) or http://localhost:8008 directly
 # Synapse Admin: http://localhost/synapse-admin/ (legacy: http://localhost:8080 redirects)
@@ -18,6 +20,10 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto http;
+        # Rewrite redirect Location headers from the upstream so that the
+        # /synapse-admin/ prefix is NOT lost when static-web-server adds a
+        # trailing slash (e.g.  /auth-callback → /auth-callback/).
+        proxy_redirect / /synapse-admin/;
     }
 
     # Element web app

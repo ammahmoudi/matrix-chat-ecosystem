@@ -9,6 +9,11 @@ synapse-data/
 synapse/homeserver.yaml
 mas/config.yaml
 
+# nginx site configs contain real domain names / SSL paths — keep local
+nginx/default.conf
+nginx/local.conf
+!nginx/*.example
+
 # Node / build outputs
 **/node_modules/
 mas-admin/dist/

@@ -1,7 +1,17 @@
-# 1. ELEMENT WEB APP - HTTP (chat.mamood.ir)
+# Production nginx config — copy to default.conf and replace all occurrences of:
+#   chat.example.com   → your Element/chat subdomain
+#   matrix.example.com → your Matrix server domain
+#   auth.example.com   → your MAS auth subdomain
+#   push.example.com   → your ntfy push subdomain
+#   cinny.chat.example.com → your Cinny subdomain (optional)
+#
+# SSL certificates are expected at /etc/letsencrypt/live/<domain>/
+# (e.g. obtained via Certbot or copied into ssl-certs/).
+
+# 1. ELEMENT WEB APP - HTTP (chat.example.com)
 server {
     listen 80;
-    server_name chat.mamood.ir;
+    server_name chat.example.com;
 
     # Hard-intercept the mobile guide redirect
     location /mobile_guide/ {
@@ -25,11 +35,11 @@ server {
     }
 }
 
-# CINNY WEB APP - HTTP (cinny.chat.mamood.ir) → redirect to HTTPS
+# CINNY WEB APP - HTTP (cinny.chat.example.com) → redirect to HTTPS
 server {
     listen 80;
     listen [::]:80;
-    server_name cinny.chat.mamood.ir;
+    server_name cinny.chat.example.com;
 
     location / {
         return 301 https://$host$request_uri;
@@ -40,23 +50,23 @@ server {
     }
 }
 
-# 2. MATRIX SERVER API - HTTP (matrix.mamood.ir)
+# 2. MATRIX SERVER API - HTTP (matrix.example.com)
 server {
     listen 80;
-    server_name matrix.mamood.ir;
+    server_name matrix.example.com;
 
     client_max_body_size 100M;
 
     location /.well-known/matrix/client {
         default_type application/json;
         add_header Access-Control-Allow-Origin *;
-        return 200 '{"m.homeserver":{"base_url":"https://matrix.mamood.ir"},"org.matrix.msc2965.authentication":{"issuer":"https://auth.mamood.ir/","account":"https://auth.mamood.ir/account"},"default_push_gateway":"https://push.mamood.ir","org.unifiedpush.custom_gateway":"https://push.mamood.ir","m.push":{"base_url":"https://push.mamood.ir"}}'; 
+        return 200 '{"m.homeserver":{"base_url":"https://matrix.example.com"},"org.matrix.msc2965.authentication":{"issuer":"https://auth.example.com/","account":"https://auth.example.com/account"},"default_push_gateway":"https://push.example.com","org.unifiedpush.custom_gateway":"https://push.example.com","m.push":{"base_url":"https://push.example.com"}}';
     }
 
     location /.well-known/matrix/server {
         default_type application/json;
         add_header Access-Control-Allow-Origin *;
-        return 200 '{"m.server":"matrix.mamood.ir:443"}';
+        return 200 '{"m.server":"matrix.example.com:443"}';
     }
 
     location = /synapse-admin {
@@ -76,27 +86,27 @@ server {
     }
 }
 
-# 5. MAS AUTH - HTTP (auth.mamood.ir) — redirect to HTTPS
+# 5. MAS AUTH - HTTP (auth.example.com) — redirect to HTTPS
 server {
     listen 80;
-    server_name auth.mamood.ir;
+    server_name auth.example.com;
     return 301 https://$host$request_uri;
 }
 
-# 7. PUSH (push.mamood.ir) - HTTP redirect to HTTPS
+# 7. PUSH (push.example.com) - HTTP redirect to HTTPS
 server {
     listen 80;
-    server_name push.mamood.ir;
+    server_name push.example.com;
     return 301 https://$host$request_uri;
 }
 
-# 8. PUSH (push.mamood.ir) - HTTPS → ntfy
+# 8. PUSH (push.example.com) - HTTPS → ntfy
 server {
     listen 443 ssl;
-    server_name push.mamood.ir;
+    server_name push.example.com;
 
-    ssl_certificate /etc/letsencrypt/live/push.mamood.ir/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/push.mamood.ir/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/push.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/push.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     resolver 127.0.0.11 valid=30s ipv6=off;
@@ -116,13 +126,13 @@ server {
     }
 }
 
-# 3. ELEMENT WEB APP - HTTPS (chat.mamood.ir)
+# 3. ELEMENT WEB APP - HTTPS (chat.example.com)
 server {
     listen 443 ssl;
-    server_name chat.mamood.ir;
+    server_name chat.example.com;
 
-    ssl_certificate /etc/letsencrypt/live/chat.mamood.ir/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/chat.mamood.ir/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/chat.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     # Hard-intercept the mobile guide redirect
@@ -147,13 +157,13 @@ server {
     }
 }
 
-# 3. MATRIX SERVER API (matrix.mamood.ir)
+# 3. MATRIX SERVER API (matrix.example.com)
 server {
     listen 443 ssl;
-    server_name matrix.mamood.ir;
+    server_name matrix.example.com;
 
-    ssl_certificate /etc/letsencrypt/live/matrix.mamood.ir/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/matrix.mamood.ir/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/matrix.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/matrix.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     client_max_body_size 100M;
@@ -166,18 +176,18 @@ server {
     location /.well-known/matrix/client {
         default_type application/json;
         add_header Access-Control-Allow-Origin *;
-        return 200 '{"m.homeserver":{"base_url":"https://matrix.mamood.ir"},"org.matrix.msc2965.authentication":{"issuer":"https://auth.mamood.ir/","account":"https://auth.mamood.ir/account"},"default_push_gateway":"https://push.mamood.ir","org.unifiedpush.custom_gateway":"https://push.mamood.ir","m.push":{"base_url":"https://push.mamood.ir"}}';
+        return 200 '{"m.homeserver":{"base_url":"https://matrix.example.com"},"org.matrix.msc2965.authentication":{"issuer":"https://auth.example.com/","account":"https://auth.example.com/account"},"default_push_gateway":"https://push.example.com","org.unifiedpush.custom_gateway":"https://push.example.com","m.push":{"base_url":"https://push.example.com"}}';
     }
 
     location /.well-known/matrix/server {
         default_type application/json;
         add_header Access-Control-Allow-Origin *;
-        return 200 '{"m.server":"matrix.mamood.ir:443"}';
+        return 200 '{"m.server":"matrix.example.com:443"}';
     }
 
     # Legacy /_mas/ path — redirect to new auth subdomain
     location /_mas/ {
-        return 301 https://auth.mamood.ir$request_uri;
+        return 301 https://auth.example.com$request_uri;
     }
 
     # MAS Admin Panel
@@ -202,6 +212,12 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
+        # Rewrite redirect Location headers from the upstream so that the
+        # /synapse-admin/ prefix is NOT lost when static-web-server adds a
+        # trailing slash (e.g.  /auth-callback → /auth-callback/).
+        # Without this, the OIDC auth-callback redirect lands on Synapse
+        # instead of synapse-admin, causing the UI to freeze on login.
+        proxy_redirect / /synapse-admin/;
     }
 
     # Legacy login/logout/refresh — must be handled by MAS, not Synapse
@@ -223,13 +239,13 @@ server {
     }
 }
 
-# 5. MAS AUTH - HTTPS (auth.mamood.ir)
+# 5. MAS AUTH - HTTPS (auth.example.com)
 server {
     listen 443 ssl;
-    server_name auth.mamood.ir;
+    server_name auth.example.com;
 
-    ssl_certificate /etc/letsencrypt/live/auth.mamood.ir/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/auth.mamood.ir/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/auth.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/auth.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     resolver 127.0.0.11 valid=30s ipv6=off;
@@ -239,7 +255,7 @@ server {
 
         # Handle CORS preflight
         if ($request_method = OPTIONS) {
-            add_header Access-Control-Allow-Origin "https://matrix.mamood.ir";
+            add_header Access-Control-Allow-Origin "https://matrix.example.com";
             add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS";
             add_header Access-Control-Allow-Headers "Authorization, Content-Type";
             add_header Access-Control-Max-Age 86400;
@@ -253,7 +269,7 @@ server {
         proxy_set_header X-Forwarded-Proto https;
         proxy_hide_header Access-Control-Allow-Origin;
         proxy_hide_header Access-Control-Allow-Headers;
-        add_header Access-Control-Allow-Origin "https://matrix.mamood.ir" always;
+        add_header Access-Control-Allow-Origin "https://matrix.example.com" always;
         add_header Access-Control-Allow-Headers "Authorization, Content-Type" always;
     }
 
@@ -267,14 +283,14 @@ server {
     }
 }
 
-# CINNY WEB APP - HTTPS (cinny.chat.mamood.ir)
+# CINNY WEB APP - HTTPS (cinny.chat.example.com)
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name cinny.chat.mamood.ir;
+    server_name cinny.chat.example.com;
 
-    ssl_certificate /etc/letsencrypt/live/chat.mamood.ir/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/chat.mamood.ir/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/chat.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     # Cache static assets; Cinny's internal nginx handles SPA routing
@@ -295,11 +311,11 @@ server {
     }
 }
 
-# 6. SYNAPSE ADMIN DASHBOARD (legacy: matrix.mamood.ir:8080 → redirects)
+# 6. SYNAPSE ADMIN DASHBOARD (legacy: matrix.example.com:8080 → redirects)
 server {
     listen 8080;
-    server_name matrix.mamood.ir;
+    server_name matrix.example.com;
 
     # Legacy port: redirect to the canonical path.
-    return 301 https://matrix.mamood.ir/synapse-admin/;
+    return 301 https://matrix.example.com/synapse-admin/;
 }
