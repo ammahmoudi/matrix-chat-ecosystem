@@ -5,26 +5,26 @@ The server has no outbound internet, so certificates are issued/renewed on a con
 ## Issue / renew (on your laptop)
 
 ```powershell
-# chat.mamood.ir and matrix.mamood.ir
+# chat.example.com and matrix.example.com
 docker run --rm -it `
   -v "$HOME/letsencrypt:/etc/letsencrypt" `
   certbot/certbot certonly --manual --preferred-challenges dns `
-  --agree-tos --email am.mahmoudi@outlook.com `
-  -d chat.mamood.ir -d matrix.mamood.ir
+  --agree-tos --email you@example.com `
+  -d chat.example.com -d matrix.example.com
 
-# auth.mamood.ir (separate cert)
+# auth.example.com (separate cert)
 docker run --rm -it `
   -v "$HOME/letsencrypt:/etc/letsencrypt" `
   certbot/certbot certonly --manual --preferred-challenges dns `
-  --agree-tos --email am.mahmoudi@outlook.com `
-  -d auth.mamood.ir
+  --agree-tos --email you@example.com `
+  -d auth.example.com
 
-# push.mamood.ir (separate cert)
+# push.example.com (separate cert)
 docker run --rm -it `
   -v "$HOME/letsencrypt:/etc/letsencrypt" `
   certbot/certbot certonly --manual --preferred-challenges dns `
-  --agree-tos --email am.mahmoudi@outlook.com `
-  -d push.mamood.ir
+  --agree-tos --email you@example.com `
+  -d push.example.com
 ```
 
 For each domain: add the `_acme-challenge` TXT record shown in Cloudflare, wait ~30s, then press Enter.
@@ -33,17 +33,17 @@ For each domain: add the `_acme-challenge` TXT record shown in Cloudflare, wait 
 
 ```powershell
 # Copy live + archive dirs for each domain
-scp -r "$HOME\letsencrypt\live\chat.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\chat.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
+scp -r "$HOME\letsencrypt\live\chat.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/live/
+scp -r "$HOME\letsencrypt\archive\chat.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/archive/
 
-scp -r "$HOME\letsencrypt\live\matrix.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\matrix.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
+scp -r "$HOME\letsencrypt\live\matrix.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/live/
+scp -r "$HOME\letsencrypt\archive\matrix.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/archive/
 
-scp -r "$HOME\letsencrypt\live\auth.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\auth.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
+scp -r "$HOME\letsencrypt\live\auth.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/live/
+scp -r "$HOME\letsencrypt\archive\auth.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/archive/
 
-scp -r "$HOME\letsencrypt\live\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/live/
-scp -r "$HOME\letsencrypt\archive\push.mamood.ir" root@178.239.151.162:/etc/letsencrypt/archive/
+scp -r "$HOME\letsencrypt\live\push.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/live/
+scp -r "$HOME\letsencrypt\archive\push.example.com" root@YOUR_SERVER_IP:/etc/letsencrypt/archive/
 ```
 
 Reload nginx on the server:

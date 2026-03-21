@@ -1,7 +1,8 @@
 # Example Synapse configuration (SAFE TO COMMIT)
-# Copy to synapse/homeserver.yaml and fill secrets.
+# Copy to synapse/homeserver.yaml and replace all occurrences of matrix.example.com
+# with your actual homeserver domain.
 
-server_name: "matrix.mamood.ir"
+server_name: "matrix.example.com"
 pid_file: /data/homeserver.pid
 
 listeners:
@@ -38,7 +39,7 @@ registration_shared_secret: "CHANGE_ME"  # shared-secret registration API
 report_stats: false
 macaroon_secret_key: "CHANGE_ME"
 form_secret: "CHANGE_ME"
-signing_key_path: "/data/matrix.mamood.ir.signing.key"
+signing_key_path: "/data/matrix.example.com.signing.key"
 
 # Shared secret between Synapse and MAS: MUST match mas/config.yaml
 matrix_authentication_service:
@@ -79,4 +80,4 @@ url_preview_ip_range_blacklist:
   - 'fc00::/7'
 
 auto_join_rooms:
-  - "#general:matrix.mamood.ir"
+  - "#general:matrix.example.com"

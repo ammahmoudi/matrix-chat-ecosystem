@@ -1,0 +1,88 @@
+{
+    "default_server_config": {
+        "m.homeserver": {
+            "base_url": "https://matrix.example.com",
+            "server_name": "matrix.example.com"
+        },
+        "m.identity_server": {
+            "base_url": ""
+        }
+    },
+
+    "brand": "My Chat",
+    "default_theme": "dark",
+    "default_country_code": "US",
+    "default_federate": false,
+
+    "disable_custom_urls": true,
+    "disable_guests": false,
+    "disable_3pid_login": true,
+
+    "branding": {
+        "welcome_background_url": [
+            "/images/bg/bg1.png"
+        ],
+        "auth_header_logo_url": "/images/logo.svg",
+        "auth_footer_links": [
+            { "text": "Home", "url": "#/welcome" },
+            { "text": "Android — Element X", "url": "https://play.google.com/store/apps/details?id=io.element.android.x" },
+            { "text": "Android — FluffyChat", "url": "https://play.google.com/store/apps/details?id=chat.fluffy.fluffychat" },
+            { "text": "iOS — Element X", "url": "https://apps.apple.com/app/element-x-secure-messenger/id1631335056" },
+            { "text": "iOS — FluffyChat", "url": "https://apps.apple.com/app/fluffychat/id1551469600" },
+            { "text": "Desktop App", "url": "https://element.io/download" }
+        ]
+    },
+
+    "embedded_pages": {
+        "welcome_url": "/welcome.html",
+        "home_url": "/home.html"
+    },
+
+    "desktop_builds": {
+        "available": true,
+        "logo": "/images/logo.svg",
+        "url": "https://element.io/download",
+        "url_macos": "https://packages.element.io/desktop/install/macos/Element.dmg",
+        "url_win64": "https://packages.element.io/desktop/install/win32/x64/Element%20Setup.exe",
+        "url_linux": "https://element.io/download#linux"
+    },
+
+    "mobile_guide_toast": true,
+
+    "mobile_builds": {
+        "android": "https://play.google.com/store/apps/details?id=io.element.android.x",
+        "ios": "https://apps.apple.com/app/element-x-secure-messenger/id1631335056",
+        "fdroid": "https://f-droid.org/packages/im.vector.app/"
+    },
+
+    "setting_defaults": {
+        "UIFeature.registration": false,
+        "show_timestamps_in_24h_format": true,
+        "UIFeature.communities": true,
+        "UIFeature.advancedSettings": true,
+        "UIFeature.help": true,
+        "UIFeature.feedback": false,
+        "sendReadReceipts": true,
+        "sendTypingNotifications": true,
+        "MessageComposerInput.ctrlEnterToSend": false,
+        "audioNotificationsEnabled": true,
+        "notificationsEnabled": true,
+        "roomListStyle": "compact"
+    },
+
+    "features": {
+        "feature_pinning": true,
+        "feature_thread": true,
+        "feature_video_rooms": true,
+        "feature_group_calls": true
+    },
+
+    "room_directory": {
+        "servers": [ "matrix.example.com" ]
+    },
+
+    "default_device_display_name": "My Chat",
+    "permalink_prefix": "https://chat.example.com",
+    "bug_report_endpoint_url": "",
+    "privacy_policy_url": ""
+}

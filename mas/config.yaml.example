@@ -1,8 +1,12 @@
 # Example MAS configuration (SAFE TO COMMIT)
-# Copy to mas/config.yaml and fill secrets.
+# Copy to mas/config.yaml and replace all occurrences of:
+#   auth.example.com   → your MAS auth subdomain
+#   matrix.example.com → your Matrix homeserver domain
+#   chat.example.com   → your Element/chat subdomain
+# Then fill in all CHANGE_ME secrets.
 
 http:
-  public_base: "https://auth.mamood.ir/"
+  public_base: "https://auth.example.com/"
   listeners:
     - name: web
       resources:
@@ -31,7 +35,7 @@ secrets:
         -----END RSA PRIVATE KEY-----
 
 matrix:
-  homeserver: "matrix.mamood.ir"
+  homeserver: "matrix.example.com"
   endpoint: "http://synapse:8008"
   # MUST match synapse/homeserver.yaml -> matrix_authentication_service.secret
   secret: "CHANGE_ME"
@@ -62,7 +66,7 @@ policy:
       - "00000000000000000000000007"
 
 email:
-  from: '"Mamoox" <noreply@matrix.mamood.ir>'
+  from: '"My Chat" <noreply@example.com>'
   transport: blackhole
 
 clients:
@@ -70,7 +74,7 @@ clients:
     client_auth_method: client_secret_post
     client_secret: "CHANGE_ME"
     redirect_uris:
-      - "https://matrix.mamood.ir/_synapse/client/oidc/callback"
+      - "https://matrix.example.com/_synapse/client/oidc/callback"
 
   - client_id: "00000000000000000000000002"
     client_auth_method: none
@@ -82,8 +86,8 @@ clients:
   - client_id: "00000000000000000000000003"
     client_auth_method: none
     redirect_uris:
-      - "https://chat.mamood.ir/"
-      - "https://chat.mamood.ir/index.html"
+      - "https://chat.example.com/"
+      - "https://chat.example.com/index.html"
 
   - client_id: "00000000000000000000000005"
     client_auth_method: none
@@ -95,9 +99,9 @@ clients:
     client_auth_method: client_secret_basic
     client_secret: "CHANGE_ME"
     redirect_uris:
-      - "https://auth.mamood.ir/api/doc/oauth2-callback"
+      - "https://auth.example.com/api/doc/oauth2-callback"
 
   - client_id: "00000000000000000000000007"
     client_auth_method: none
     redirect_uris:
-      - "https://matrix.mamood.ir/mas-admin/callback"
+      - "https://matrix.example.com/mas-admin/callback"

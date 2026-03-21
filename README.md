@@ -51,21 +51,33 @@ Local access:
 
 ### 1) Create local config files
 
-This repo is intended to be public; secrets and instance-specific configs are kept out of git.
+> **⚠️ Required before first run.**  
+> All real config files are gitignored and **not present** in the repository.  
+> The stack will not start correctly until every file below exists with your actual values.  
+> Each `*.example` file is a template — copy it, then fill in your domains and secrets.
 
 ```bash
 cp .env.example .env
 cp synapse/homeserver.yaml.example synapse/homeserver.yaml
 cp mas/config.yaml.example mas/config.yaml
+cp ntfy/server.yml.example ntfy/server.yml
+cp nginx/default.conf.example nginx/default.conf
+cp element/config.json.example element/config.json
+cp element/home.html.example element/home.html
+cp element/welcome.html.example element/welcome.html
+cp cinny/config.json.example cinny/config.json
+cp synapse-admin/config.json.example synapse-admin/config.json
 ```
 
-Then edit:
+Replace every occurrence of `example.com` with your actual domain across all copied files, then edit:
 
-- `.env` (Postgres credentials)
+- `.env` (Postgres credentials, domain vars)
 - `synapse/homeserver.yaml` (server name, public_baseurl, MAS integration, push settings)
 - `mas/config.yaml` (public_base, clients, policy)
 - `nginx/default.conf` (domains/routes) or `nginx/local.conf` (local)
-- `element/config.json` and `cinny/config.json` (homeserver URL, branding)
+- `element/config.json`, `element/home.html`, `element/welcome.html` (homeserver URL, branding)
+- `cinny/config.json`, `synapse-admin/config.json` (homeserver URL)
+- `ntfy/server.yml` (push base URL)
 
 ### 2) Start the stack
 
@@ -140,17 +152,19 @@ Then open your Synapse Admin URL (for example `https://matrix.example.com/synaps
 
 ## Push notifications (UnifiedPush via ntfy)
 
-This repo includes an optional ntfy service that can act as a UnifiedPush provider for Android clients (e.g. Element X).
+This stack includes a self-hosted [ntfy](https://ntfy.sh) service as a **UnifiedPush** provider — a privacy-friendly push notification alternative to Google FCM, useful anywhere FCM is unreliable or blocked.
 
-**Architecture (typical):**
+**Full setup guide:** [docs/ntfy-push-notifications.md](docs/ntfy-push-notifications.md)
 
-```text
-Android client  ←─ UnifiedPush distributor (ntfy app) ←─ ntfy server
-                                                     ↑
-                                                Synapse push
-```
-
-If you enable ntfy, make sure the Synapse push configuration and any hostnames in `docker-compose.yml` (for example `extra_hosts`) match your deployment.
+Covers:
+- Required `synapse/homeserver.yaml` changes (`ip_range_whitelist`)
+- Required nginx proxy block for the push subdomain
+- First-run access control (`ntfy access everyone 'up*' read-write`)
+- Android ntfy client install links (Play Store, F-Droid, APK) and setting the default server
+- FluffyChat: verifying the push server URL in notification settings
+- Element X: setting the notification provider to ntfy
+- `.well-known` auto-discovery advertisement
+- Troubleshooting table
 
 ## Admin panels
 

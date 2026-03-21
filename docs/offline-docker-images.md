@@ -51,7 +51,7 @@ No local image exports are required.
 ## 4) Transfer to the server
 
 ```bash
-scp artifacts/docker-images/*.tar root@178.239.151.162:/opt/matrix-project/artifacts/docker-images/
+scp artifacts/docker-images/*.tar root@YOUR_SERVER_IP:/opt/matrix-project/artifacts/docker-images/
 ```
 
 ## 5) Import on the offline server

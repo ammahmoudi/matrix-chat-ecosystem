@@ -1,0 +1,27 @@
+# ntfy server configuration — EXAMPLE (SAFE TO COMMIT)
+# Copy to ntfy/server.yml and replace all occurrences of push.example.com
+# with your actual push subdomain.
+# Docs: https://docs.ntfy.sh/config/
+
+# Public base URL — used in links and UnifiedPush registration
+base-url: "https://push.example.com"
+
+# Listen on HTTP (nginx terminates SSL)
+listen-http: ":80"
+
+# Message cache — keeps messages for offline devices
+cache-file: "/var/cache/ntfy/cache.db"
+cache-duration: "24h"
+
+# Access control database
+auth-file: "/var/lib/ntfy/user.db"
+
+# Deny all by default — only allow UnifiedPush topics (up*) for everyone
+# Run after first start: docker exec -it <ntfy-container> ntfy access everyone 'up*' read-write
+auth-default-access: "deny-all"
+
+# We're behind nginx
+behind-proxy: true
+
+# Disable Firebase (we don't have it, this just suppresses warnings)
+firebase-key-file: ""

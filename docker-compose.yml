@@ -43,7 +43,7 @@ services:
     environment:
       - SYNAPSE_CONFIG_PATH=/config/homeserver.yaml
     extra_hosts:
-      - "push.mamood.ir:host-gateway"  # allows Synapse to reach nginx→ntfy on the host
+      - "${PUSH_DOMAIN:-push.example.com}:host-gateway"  # allows Synapse to reach nginx→ntfy on the host
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,7 +79,7 @@ services:
   #   networks:
   #     - matrix-net
 
-  # synapse-admin (etkecc fork): served via nginx at https://matrix.mamood.ir/synapse-admin/
+  # synapse-admin (etkecc fork): served via nginx at https://matrix.example.com/synapse-admin/
   synapse-admin:
     image: etkecc/synapse-admin:latest
     container_name: mamood-admin
@@ -117,10 +117,10 @@ services:
     container_name: mamood-mas-admin
     restart: unless-stopped
     environment:
-      - MAS_ADMIN_MAS_BASE_URL=${MAS_ADMIN_MAS_BASE_URL:-https://auth.mamood.ir}
+      - MAS_ADMIN_MAS_BASE_URL=${MAS_ADMIN_MAS_BASE_URL:-https://auth.example.com}
       - MAS_ADMIN_CLIENT_ID=${MAS_ADMIN_CLIENT_ID:-00000000000000000000000007}
-      - MAS_ADMIN_REDIRECT_BASE=${MAS_ADMIN_REDIRECT_BASE:-https://matrix.mamood.ir}
-      - MAS_ADMIN_CHAT_BASE_URL=${MAS_ADMIN_CHAT_BASE_URL:-https://chat.mamood.ir}
+      - MAS_ADMIN_REDIRECT_BASE=${MAS_ADMIN_REDIRECT_BASE:-https://matrix.example.com}
+      - MAS_ADMIN_CHAT_BASE_URL=${MAS_ADMIN_CHAT_BASE_URL:-https://chat.example.com}
     networks:
       - matrix-net
 

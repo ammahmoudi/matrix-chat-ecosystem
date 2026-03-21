@@ -8,6 +8,12 @@ synapse-data/
 # Secret configs (keep local, do NOT commit)
 synapse/homeserver.yaml
 mas/config.yaml
+ntfy/server.yml
+element/config.json
+element/home.html
+element/welcome.html
+cinny/config.json
+synapse-admin/config.json
 
 # nginx site configs contain real domain names / SSL paths — keep local
 nginx/default.conf

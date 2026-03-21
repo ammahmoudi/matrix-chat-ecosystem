@@ -1,0 +1,4 @@
+{
+  "restrictBaseUrl": "https://matrix.example.com",
+  "externalAuthProvider": true
+}

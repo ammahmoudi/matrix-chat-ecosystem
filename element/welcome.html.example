@@ -1,0 +1,121 @@
+<style type="text/css">
+    /* Pin footer to bottom of viewport on all screen sizes */
+    .mx_AuthFooter {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 100 !important;
+    }
+
+    /* Add padding so modal content doesn't hide under the fixed footer */
+    .mx_AuthPage_modal {
+        margin-bottom: 60px !important;
+    }
+
+    /* Center our content inside Element's own welcome body */
+    .mx_WelcomePage_body {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center;
+        padding: 1.5rem;
+        box-sizing: border-box;
+    }
+
+    .mx_custom_logo {
+        width: 52px;
+        height: 52px;
+        margin-bottom: 1rem;
+    }
+
+    .mx_custom_title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.3rem;
+        color: #f8fafc;
+    }
+
+    .mx_custom_tagline {
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.4);
+        margin: 0 0 1.5rem;
+        line-height: 1.5;
+    }
+
+    .mx_custom_actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        width: 100%;
+        max-width: 260px;
+    }
+
+    .mx_custom_btn {
+        display: block;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity 0.15s, transform 0.1s;
+        box-sizing: border-box;
+    }
+
+    .mx_custom_btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .mx_custom_btn:active { transform: translateY(0); }
+
+    .mx_custom_btn_primary {
+        background: #0ea5e9;
+        color: #fff !important;
+    }
+
+    .mx_custom_btn_secondary {
+        background: rgba(255,255,255,0.07);
+        color: rgba(255,255,255,0.8) !important;
+        border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .mx_custom_btn_cinny {
+        background: #26262E;
+        color: rgba(255,255,255,0.85) !important;
+        border: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .mx_custom_btn_cinny img {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+    .mx_custom_cinny_badge {
+        display: inline-block;
+        font-size: 0.62rem;
+        font-weight: 700;
+        background: #0ea5e9;
+        color: #fff;
+        border-radius: 4px;
+        padding: 1px 5px;
+        letter-spacing: 0.04em;
+        vertical-align: middle;
+        margin-left: 2px;
+    }
+</style>
+
+<img class="mx_custom_logo" src="/images/logo.svg" alt="" onerror="this.style.display='none'">
+<h1 class="mx_custom_title">My Chat</h1>
+<p class="mx_custom_tagline">Private &amp; encrypted messaging</p>
+
+<div class="mx_custom_actions">
+    <a class="mx_custom_btn mx_custom_btn_primary" href="#/login">Sign In</a>
+    <a class="mx_custom_btn mx_custom_btn_cinny" href="https://cinny.chat.example.com" target="_blank">
+        <img src="/images/cinny.svg" alt="" onerror="this.style.display='none'">
+        Try Cinny <span class="mx_custom_cinny_badge">Mobile friendly</span>
+    </a>
+</div>
