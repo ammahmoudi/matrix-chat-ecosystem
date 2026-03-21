@@ -113,8 +113,15 @@
         <a class="mx_home_action" href="https://cinny.chat.example.com" target="_blank" style="border-color:rgba(99,179,237,0.25);">
             <img src="/images/cinny.svg" alt="Cinny" onerror="this.style.display='none'" style="width:1.25rem;height:1.25rem;flex-shrink:0;">
             <div>
-                <div class="mx_home_action_title">Open in Cinny <span style="font-size:0.65rem;font-weight:700;background:#0ea5e9;color:#fff;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;">Mobile friendly</span></div>
-                <div class="mx_home_action_desc">A lighter web client — great on phones</div>
+                <div class="mx_home_action_title">Open in Cinny <span style="font-size:0.65rem;font-weight:700;background:#0ea5e9;color:#fff;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;">Lightweight</span></div>
+                <div class="mx_home_action_desc">Clean, fast web client</div>
+            </div>
+        </a>
+        <a class="mx_home_action" href="https://fluffy.chat.example.com" target="_blank" style="border-color:rgba(168,85,247,0.3);">
+            <img src="/images/fluffy.svg" alt="FluffyChat" onerror="this.style.display='none'" style="width:1.25rem;height:1.25rem;flex-shrink:0;">
+            <div>
+                <div class="mx_home_action_title">Open in FluffyChat <span style="font-size:0.65rem;font-weight:700;background:#a855f7;color:#fff;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;">Mobile friendly</span></div>
+                <div class="mx_home_action_desc">Flutter-based client — great on phones</div>
             </div>
         </a>
     </div>
@@ -123,7 +130,11 @@
     <div class="mx_home_dl_row">
         <a class="mx_home_dl" href="https://cinny.chat.example.com" target="_blank" style="border-color:rgba(99,179,237,0.2);">
             <img src="/images/cinny.svg" alt="" onerror="this.style.display='none'" style="width:1rem;height:1rem;">
-            <div><div class="mx_home_dl_name">Cinny</div><div class="mx_home_dl_sub">Web — mobile friendly</div></div>
+            <div><div class="mx_home_dl_name">Cinny</div><div class="mx_home_dl_sub">Web — lightweight</div></div>
+        </a>
+        <a class="mx_home_dl" href="https://fluffy.chat.example.com" target="_blank" style="border-color:rgba(168,85,247,0.25);">
+            <img src="/images/fluffy.svg" alt="" onerror="this.style.display='none'" style="width:1rem;height:1rem;">
+            <div><div class="mx_home_dl_name">FluffyChat</div><div class="mx_home_dl_sub">Web — mobile friendly</div></div>
         </a>
         <a class="mx_home_dl" href="https://play.google.com/store/apps/details?id=io.element.android.x" target="_blank">
             <span>📱</span><div><div class="mx_home_dl_name">Android</div><div class="mx_home_dl_sub">Element X</div></div>

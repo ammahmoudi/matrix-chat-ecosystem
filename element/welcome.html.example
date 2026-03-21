@@ -94,6 +94,22 @@
         flex-shrink: 0;
     }
 
+    .mx_custom_btn_fluffy {
+        background: #1e1330;
+        color: rgba(255,255,255,0.85) !important;
+        border: 1px solid rgba(168,85,247,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .mx_custom_btn_fluffy img {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
     .mx_custom_cinny_badge {
         display: inline-block;
         font-size: 0.62rem;
@@ -110,12 +126,16 @@
 
 <img class="mx_custom_logo" src="/images/logo.svg" alt="" onerror="this.style.display='none'">
 <h1 class="mx_custom_title">My Chat</h1>
-<p class="mx_custom_tagline">Private &amp; encrypted messaging</p>
+<p class="mx_custom_tagline">Private &amp; encrypted messaging<br>for everyone, securely.</p>
 
 <div class="mx_custom_actions">
     <a class="mx_custom_btn mx_custom_btn_primary" href="#/login">Sign In</a>
     <a class="mx_custom_btn mx_custom_btn_cinny" href="https://cinny.chat.example.com" target="_blank">
         <img src="/images/cinny.svg" alt="" onerror="this.style.display='none'">
-        Try Cinny <span class="mx_custom_cinny_badge">Mobile friendly</span>
+        Try Cinny <span class="mx_custom_cinny_badge">Lightweight</span>
+    </a>
+    <a class="mx_custom_btn mx_custom_btn_fluffy" href="https://fluffy.chat.example.com" target="_blank">
+        <img src="/images/fluffy.svg" alt="" onerror="this.style.display='none'">
+        Try FluffyChat <span class="mx_custom_cinny_badge" style="background:#a855f7;">Mobile friendly</span>
     </a>
 </div>

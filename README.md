@@ -12,6 +12,7 @@ This repo is not a new homeserver implementation — it **assembles upstream pro
 | MAS (Matrix Authentication Service) | Login/registration/OIDC (next-gen auth) |
 | Element Web | Main web client |
 | Cinny | Alternative lightweight web client |
+| FluffyChat Web | Alternative Flutter-based web client |
 | Synapse Admin | Admin dashboard for Synapse |
 | MAS Admin | Admin UI for MAS (users, tokens, sessions) |
 | nginx | Reverse proxy + routing (+ TLS in production) |
@@ -66,6 +67,7 @@ cp element/config.json.example element/config.json
 cp element/home.html.example element/home.html
 cp element/welcome.html.example element/welcome.html
 cp cinny/config.json.example cinny/config.json
+cp fluffychat/config.json.example fluffychat/config.json
 cp synapse-admin/config.json.example synapse-admin/config.json
 ```
 
@@ -76,7 +78,7 @@ Replace every occurrence of `example.com` with your actual domain across all cop
 - `mas/config.yaml` (public_base, clients, policy)
 - `nginx/default.conf` (domains/routes) or `nginx/local.conf` (local)
 - `element/config.json`, `element/home.html`, `element/welcome.html` (homeserver URL, branding)
-- `cinny/config.json`, `synapse-admin/config.json` (homeserver URL)
+- `cinny/config.json`, `fluffychat/config.json`, `synapse-admin/config.json` (homeserver URL)
 - `ntfy/server.yml` (push base URL)
 
 ### 2) Start the stack
@@ -201,6 +203,7 @@ docker compose exec mas mas-cli doctor
 ├── mas-admin/
 ├── element/
 ├── cinny/
+├── fluffychat/
 ├── synapse-admin/
 ├── postgres/
 └── ntfy/

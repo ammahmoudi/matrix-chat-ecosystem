@@ -13,6 +13,7 @@ element/config.json
 element/home.html
 element/welcome.html
 cinny/config.json
+fluffychat/config.json
 synapse-admin/config.json
 
 # nginx site configs contain real domain names / SSL paths — keep local

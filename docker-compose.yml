@@ -112,6 +112,15 @@ services:
     networks:
       - matrix-net
 
+  fluffychat-web:
+    image: amahmoudi/fluffychat-web:latest
+    container_name: mamood-fluffychat
+    restart: unless-stopped
+    volumes:
+      - ./fluffychat/config.json:/config/config.json:ro
+    networks:
+      - matrix-net
+
   mas-admin:
     image: amahmoudi/mas-admin:latest
     container_name: mamood-mas-admin
@@ -145,6 +154,8 @@ services:
       mas-admin:
         condition: service_started
       cinny:
+        condition: service_started
+      fluffychat-web:
         condition: service_started
       ntfy:
         condition: service_started

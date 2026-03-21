@@ -50,6 +50,21 @@ server {
     }
 }
 
+# FLUFFYCHAT WEB APP - HTTP (fluffy.chat.example.com) → redirect to HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name fluffy.chat.example.com;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+
+    location /.well-known/acme-challenge/ {
+        alias /var/lib/letsencrypt/.well-known/acme-challenge/;
+    }
+}
+
 # 2. MATRIX SERVER API - HTTP (matrix.example.com)
 server {
     listen 80;
@@ -304,6 +319,35 @@ server {
 
     location / {
         proxy_pass http://cinny:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+
+# FLUFFYCHAT WEB APP - HTTPS (fluffy.chat.example.com)
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name fluffy.chat.example.com;
+
+    # Requires a wildcard cert for *.chat.example.com, or add fluffy.chat.example.com
+    # as an alt-name when issuing the chat.example.com certificate.
+    ssl_certificate /etc/letsencrypt/live/chat.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?|ttf|eot)$ {
+        proxy_pass http://fluffychat-web:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location / {
+        proxy_pass http://fluffychat-web:80;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
