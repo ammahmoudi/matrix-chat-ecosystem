@@ -104,7 +104,8 @@ services:
       - matrix-net
 
   cinny:
-    image: ajbura/cinny:latest
+    # image: ajbura/cinny:latest
+    image: amahmoudi/cinny-mamood:latest
     container_name: mamood-cinny
     restart: unless-stopped
     volumes:

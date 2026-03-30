@@ -4,8 +4,8 @@ If your network restricts Docker Hub and/or GHCR access, configure Docker to use
 
 This project has been used with these mirrors (see README "Server Info"):
 
-- Docker Hub mirror: <https://dockerhub.iranserver.com>
-- GHCR mirror: <https://ghcr-mirror.liara.ir>
+- Docker Hub mirror: <https://docker.iranserver.com>
+- GHCR mirror: < >
 
 ## Docker daemon configuration (example)
 
@@ -14,7 +14,7 @@ On the server, create or edit `/etc/docker/daemon.json`.
 ```json
 {
   "registry-mirrors": [
-    "https://dockerhub.iranserver.com"
+    "https://docker.iranserver.com"
   ]
 }
 ```
