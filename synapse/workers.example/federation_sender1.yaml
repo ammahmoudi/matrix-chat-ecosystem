@@ -1,0 +1,11 @@
+ b# EXAMPLE — Federation sender worker (copy to synapse/workers/ and adjust).
+# Handles all outbound federation traffic. No HTTP listener needed.
+# Requires send_federation: false in homeserver.yaml.
+#
+# Scale to 2: duplicate as federation_sender2, add to instance_map and
+# federation_sender_instances in homeserver.yaml. Restart main process only.
+#
+# Docker service (example): synapse-federation-sender-1
+
+worker_app: synapse.app.generic_worker
+worker_name: federation_sender1

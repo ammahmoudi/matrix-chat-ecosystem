@@ -189,6 +189,31 @@ services:
       - matrix-net
 
   # ---------------------------------------------------------------------------
+  # Federation sender worker
+  # Handles: all outbound federation — signing and transmitting transactions to
+  # remote homeservers, managing per-destination queues and retry backoff.
+  # No HTTP listener — does not appear in nginx config.
+  # Frees the main process from blocking on slow/unreachable remote servers.
+  # ---------------------------------------------------------------------------
+  synapse-federation-sender-1:
+    image: matrixdotorg/synapse:latest
+    container_name: mamood-synapse-federation-sender-1
+    restart: unless-stopped
+    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/federation_sender1.yaml
+    depends_on:
+      synapse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./synapse-data:/data
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml:ro
+      - ./synapse/synapse.log.config:/config/synapse.log.config:ro
+      - ./synapse/workers:/config/workers:ro
+    networks:
+      - matrix-net
+
+  # ---------------------------------------------------------------------------
   # Nginx — override: use the workers-aware routing config and add worker
   # health dependencies so nginx only starts after workers are ready.
   # ---------------------------------------------------------------------------

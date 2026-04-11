@@ -131,6 +131,9 @@ auto_join_rooms:
 #   event_persister1:
 #     host: synapse-event-persister-1
 #     port: 9085
+#   federation_sender1:
+#     host: synapse-federation-sender-1
+#     port: 9086
 
 # stream_writers:
 #   events:
@@ -147,5 +150,8 @@ auto_join_rooms:
 
 # pusher_instances:
 #   - pusher_worker1
+
+# federation_sender_instances:
+#   - federation_sender1
 
 # send_federation: false

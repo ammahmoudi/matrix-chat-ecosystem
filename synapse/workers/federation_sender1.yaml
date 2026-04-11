@@ -1,0 +1,24 @@
+# Federation sender worker — handles all outbound federation traffic.
+#
+# Responsible for:
+#   - Sending your events/state to remote homeservers
+#   - Managing the per-destination send queues and retry logic
+#   - Signing and transmitting federation transactions
+#
+# Frees the main process from blocking on slow or unreachable remote servers,
+# which is the most common cause of main-process latency on federated instances.
+#
+# NOTE: No HTTP listener required. This worker does not serve REST endpoints
+#       and does not appear in the nginx config — it only makes outbound calls.
+# NOTE: send_federation: false must be set in homeserver.yaml so the main
+#       process stops sending federation (this worker takes over).
+#
+# To scale to 2 senders, duplicate this file (federation_sender2), add it to
+# instance_map + federation_sender_instances in homeserver.yaml, and add a
+# second container in docker-compose.workers.yml. No full restart required
+# (unlike event persisters) — just restart the main process.
+#
+# Docker service: synapse-federation-sender-1
+
+worker_app: synapse.app.generic_worker
+worker_name: federation_sender1
