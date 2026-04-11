@@ -1,0 +1,217 @@
+# =============================================================================
+# Synapse WORKER MODE overlay — opt-in multiprocess scaling.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.workers.yml up -d
+#
+# Prerequisites (checklist before first run):
+#   1. Uncomment the WORKERS MODE block at the bottom of synapse/homeserver.yaml
+#      (replication listener, Redis, instance_map, stream_writers, etc.)
+#   2. Set a strong worker_replication_secret in homeserver.yaml and here.
+#   3. Copy synapse/workers.example/*.yaml → synapse/workers/ and adjust if needed.
+#   4. Nginx config: this overlay mounts nginx/default.workers.conf which routes
+#      /sync and stream-writer endpoints to the correct worker containers.
+#      Copy nginx/default.workers.conf.example → nginx/default.workers.conf and
+#      fill your domain if it differs from the existing default.conf.
+#
+# Architecture started by this overlay:
+#   synapse              — main process (writes media, coordinates)
+#   redis                — pub/sub relay between processes
+#   synapse-generic-1    — /sync, client API, stream writer (typing/receipts/etc.)
+#   synapse-generic-2    — /sync, client API (load-balanced with worker 1)
+#   synapse-event-pers-1 — event persistence (DB write offload)
+#   synapse-background   — background jobs (user dir, stats, cleanup)
+#   synapse-pusher-1     — ntfy push notifications
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Redis — inter-worker pub/sub relay.
+  # No persistence required; Synapse only uses it as a message bus.
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: mamood-redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - matrix-net
+
+  # ---------------------------------------------------------------------------
+  # Synapse main process — override: add Redis dependency.
+  # The container definition is inherited from docker-compose.yml; this section
+  # only adds the redis health dependency so the main process waits for Redis.
+  # ---------------------------------------------------------------------------
+  synapse:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Generic worker 1
+  # Handles: /sync (sticky), client API, stream writes for typing/receipts/
+  #          to_device/account_data/presence/push_rules.
+  # ---------------------------------------------------------------------------
+  synapse-generic-worker-1:
+    image: matrixdotorg/synapse:latest
+    container_name: mamood-synapse-generic-1
+    restart: unless-stopped
+    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/generic_worker1.yaml
+    extra_hosts:
+      - "${PUSH_DOMAIN:-push.example.com}:host-gateway"
+    depends_on:
+      synapse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:8083/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - ./synapse-data:/data
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml:ro
+      - ./synapse/synapse.log.config:/config/synapse.log.config:ro
+      - ./synapse/workers:/config/workers:ro
+    networks:
+      - matrix-net
+
+  # ---------------------------------------------------------------------------
+  # Generic worker 2
+  # Handles: /sync (sticky, same pool as worker 1), client API.
+  # Add more generic workers here if /sync latency remains high.
+  # ---------------------------------------------------------------------------
+  synapse-generic-worker-2:
+    image: matrixdotorg/synapse:latest
+    container_name: mamood-synapse-generic-2
+    restart: unless-stopped
+    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/generic_worker2.yaml
+    extra_hosts:
+      - "${PUSH_DOMAIN:-push.example.com}:host-gateway"
+    depends_on:
+      synapse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:8084/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - ./synapse-data:/data
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml:ro
+      - ./synapse/synapse.log.config:/config/synapse.log.config:ro
+      - ./synapse/workers:/config/workers:ro
+    networks:
+      - matrix-net
+
+  # ---------------------------------------------------------------------------
+  # Event persister worker
+  # Handles: writing events to the DB (the single heaviest write path).
+  # Does NOT serve any client HTTP — nginx does not route to it directly.
+  # Increase to 2 instances (event_persister2) if event write queue grows.
+  # ---------------------------------------------------------------------------
+  synapse-event-persister-1:
+    image: matrixdotorg/synapse:latest
+    container_name: mamood-synapse-event-pers-1
+    restart: unless-stopped
+    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/event_persister1.yaml
+    depends_on:
+      synapse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./synapse-data:/data
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml:ro
+      - ./synapse/synapse.log.config:/config/synapse.log.config:ro
+      - ./synapse/workers:/config/workers:ro
+    networks:
+      - matrix-net
+
+  # ---------------------------------------------------------------------------
+  # Background worker
+  # Runs: user directory updates, room statistics, media cleanup, etc.
+  # No HTTP listener — does not appear in nginx config.
+  # ---------------------------------------------------------------------------
+  synapse-background-worker:
+    image: matrixdotorg/synapse:latest
+    container_name: mamood-synapse-background
+    restart: unless-stopped
+    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/background_worker.yaml
+    depends_on:
+      synapse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./synapse-data:/data
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml:ro
+      - ./synapse/synapse.log.config:/config/synapse.log.config:ro
+      - ./synapse/workers:/config/workers:ro
+    networks:
+      - matrix-net
+
+  # ---------------------------------------------------------------------------
+  # Pusher worker
+  # Sends: ntfy / UnifiedPush / email push notifications.
+  # No HTTP listener — does not appear in nginx config.
+  # Needs host-gateway so it can reach ntfy on the Docker host network.
+  # ---------------------------------------------------------------------------
+  synapse-pusher-worker-1:
+    image: matrixdotorg/synapse:latest
+    container_name: mamood-synapse-pusher-1
+    restart: unless-stopped
+    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/pusher_worker1.yaml
+    extra_hosts:
+      - "${PUSH_DOMAIN:-push.example.com}:host-gateway"
+    depends_on:
+      synapse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./synapse-data:/data
+      - ./synapse/homeserver.yaml:/config/homeserver.yaml:ro
+      - ./synapse/synapse.log.config:/config/synapse.log.config:ro
+      - ./synapse/workers:/config/workers:ro
+    networks:
+      - matrix-net
+
+  # ---------------------------------------------------------------------------
+  # Nginx — override: use the workers-aware routing config and add worker
+  # health dependencies so nginx only starts after workers are ready.
+  # ---------------------------------------------------------------------------
+  nginx:
+    volumes:
+      - ./nginx/default.workers.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      synapse:
+        condition: service_healthy
+      synapse-generic-worker-1:
+        condition: service_healthy
+      synapse-generic-worker-2:
+        condition: service_healthy
+      element:
+        condition: service_started
+      synapse-admin:
+        condition: service_started
+      mas-admin:
+        condition: service_started
+      cinny:
+        condition: service_started
+      fluffychat-web:
+        condition: service_started
+      ntfy:
+        condition: service_started

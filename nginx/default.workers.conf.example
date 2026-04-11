@@ -1,0 +1,244 @@
+# ==============================================================================
+# EXAMPLE workers nginx configuration — replace matrix.example.com with your domain.
+# Copy to nginx/default.workers.conf, replace all occurrences of example.com.
+#
+# Used when running:
+#   docker compose -f docker-compose.yml -f docker-compose.workers.yml up -d
+# ==============================================================================
+
+# ── Username extraction from access token ─────────────────────────────────────
+map $arg_access_token $accesstoken_from_urlparam {
+    default                          $arg_access_token;
+    "~syt_(?<username>.*?)_.*"       $username;
+}
+
+map $http_authorization $mxid_localpart {
+    default                              $http_authorization;
+    "~Bearer syt_(?<username>.*?)_.*"    $username;
+    ""                                   $accesstoken_from_urlparam;
+}
+
+map $arg_since $sync_upstream {
+    default   synapse_sync;
+    ""        synapse_initial_sync;
+}
+
+# ── Upstream pools ─────────────────────────────────────────────────────────────
+upstream synapse_sync {
+    hash $mxid_localpart consistent;
+    server synapse-generic-worker-1:8083;
+    server synapse-generic-worker-2:8084;
+}
+
+upstream synapse_initial_sync {
+    hash $mxid_localpart consistent;
+    server synapse-generic-worker-1:8083;
+}
+
+upstream synapse_workers {
+    server synapse-generic-worker-1:8083;
+    server synapse-generic-worker-2:8084;
+}
+
+upstream synapse_stream_writer {
+    server synapse-generic-worker-1:8083;
+}
+
+upstream synapse_federation_inbound {
+    hash $remote_addr consistent;
+    server synapse-generic-worker-1:8083;
+    server synapse-generic-worker-2:8084;
+}
+
+upstream synapse_main {
+    server synapse:8008;
+}
+
+# ── Element — HTTP ─────────────────────────────────────────────────────────────
+server {
+    listen 80;
+    server_name chat.example.com;
+
+    location /mobile_guide/ { return 302 /; }
+    location /favicon.ico { proxy_pass http://element:80/images/logo.png; }
+
+    location / {
+        proxy_pass http://element:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto http;
+    }
+}
+
+# ── Matrix API — HTTP ──────────────────────────────────────────────────────────
+server {
+    listen 80;
+    server_name matrix.example.com;
+
+    client_max_body_size 100M;
+
+    location /.well-known/matrix/client {
+        default_type application/json;
+        add_header Access-Control-Allow-Origin *;
+        return 200 '{"m.homeserver":{"base_url":"https://matrix.example.com"},"org.matrix.msc2965.authentication":{"issuer":"https://auth.example.com/","account":"https://auth.example.com/account"}}';
+    }
+
+    location /.well-known/matrix/server {
+        default_type application/json;
+        add_header Access-Control-Allow-Origin *;
+        return 200 '{"m.server":"matrix.example.com:443"}';
+    }
+
+    location / {
+        proxy_pass http://synapse_main;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto http;
+    }
+}
+
+# ── MAS Auth — HTTP → HTTPS ────────────────────────────────────────────────────
+server {
+    listen 80;
+    server_name auth.example.com;
+    return 301 https://$host$request_uri;
+}
+
+# ── Matrix API — HTTPS (worker-aware routing) ──────────────────────────────────
+server {
+    listen 443 ssl;
+    server_name matrix.example.com;
+
+    ssl_certificate /etc/letsencrypt/live/matrix.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/matrix.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    client_max_body_size 100M;
+    resolver 127.0.0.11 valid=30s ipv6=off;
+
+    location /.well-known/matrix/client {
+        default_type application/json;
+        add_header Access-Control-Allow-Origin *;
+        return 200 '{"m.homeserver":{"base_url":"https://matrix.example.com"},"org.matrix.msc2965.authentication":{"issuer":"https://auth.example.com/","account":"https://auth.example.com/account"}}';
+    }
+
+    location /.well-known/matrix/server {
+        default_type application/json;
+        add_header Access-Control-Allow-Origin *;
+        return 200 '{"m.server":"matrix.example.com:443"}';
+    }
+
+    # MAS handles login/logout — goes to MAS container, not Synapse workers
+    location ~ ^/_matrix/client/(v3|r0)/(login|logout|logout/all|refresh) {
+        set $mas_upstream http://mas:8090;
+        proxy_pass $mas_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # Media stays on main process
+    location ~ ^/_matrix/media/ {
+        proxy_pass http://synapse_main;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+
+    # Sync (ongoing/initial — map selects the right upstream)
+    location ~ ^/_matrix/client/(r0|v3)/sync$ {
+        proxy_pass http://$sync_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 120s;
+    }
+
+    location ~ ^/_matrix/client/(api/v1|r0|v3)/initialSync$ {
+        proxy_pass http://synapse_initial_sync;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 120s;
+    }
+
+    location ~ ^/_matrix/client/(api/v1|r0|v3)/rooms/[^/]+/initialSync$ {
+        proxy_pass http://synapse_initial_sync;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 120s;
+    }
+
+    # Stream writer routes (all owned by generic_worker1)
+    location ~ ^/_matrix/client/(api/v1|r0|v3|unstable)/rooms/.*/typing { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(r0|v3|unstable)/rooms/.*/(receipt|read_markers)$ { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(r0|v3|unstable)/sendToDevice/ { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(r0|v3|unstable)/.*/tags { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(r0|v3|unstable)/.*/account_data { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(api/v1|r0|v3|unstable)/presence/ { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(api/v1|r0|v3|unstable)/pushrules/ { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(r0|v3)/delete_devices$ { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(api/v1|r0|v3|unstable)/devices(/|$) { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(r0|v3|unstable)/keys/upload { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_matrix/client/(api/v1|r0|v3|unstable)/keys/(device_signing|signatures)/upload$ { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+
+    # Inbound federation — sticky by source IP
+    location ~ ^/_matrix/federation/v1/send/ {
+        proxy_pass http://synapse_federation_inbound;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    # SSO callbacks — single worker
+    location ~ ^/_matrix/client/(api/v1|r0|v3|unstable)/login/sso/redirect { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+    location ~ ^/_synapse/client/(pick_idp|pick_username|new_user_consent|sso_register|oidc/callback)$ { proxy_pass http://synapse_stream_writer; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto https; }
+
+    # Everything else — round-robin workers
+    location / {
+        proxy_pass http://synapse_workers;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+
+# ── MAS Auth — HTTPS ───────────────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    server_name auth.example.com;
+
+    ssl_certificate /etc/letsencrypt/live/auth.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/auth.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    resolver 127.0.0.11 valid=30s ipv6=off;
+
+    location / {
+        set $mas_upstream http://mas:8090;
+        proxy_pass $mas_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+
+# ── Legacy Synapse Admin port ──────────────────────────────────────────────────
+server {
+    listen 8080;
+    server_name matrix.example.com;
+    return 301 https://matrix.example.com/synapse-admin/;
+}
