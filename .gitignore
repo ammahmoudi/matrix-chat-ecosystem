@@ -19,6 +19,7 @@ synapse-admin/config.json
 # nginx site configs contain real domain names / SSL paths — keep local
 nginx/default.conf
 nginx/local.conf
+nginx/default.workers.conf
 !nginx/*.example
 
 # Node / build outputs
@@ -38,7 +39,7 @@ repo-soruces/
 # Offline artifacts (keep docs/structure, but never commit large bundles)
 artifacts/docker-images/*
 artifacts/docker-archives/*
-
+artifacts/tmp/*
 # Local-only large files (kept for offline context)
 spec.json
 
