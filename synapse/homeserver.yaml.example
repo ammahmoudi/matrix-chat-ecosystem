@@ -39,7 +39,7 @@ database:
 
 log_config: "/config/synapse.log.config"
 media_store_path: /data/media_store
-max_upload_size: "100M"
+max_upload_size: "300M"
 
 # Registration disabled; MAS handles auth.
 enable_registration: false
