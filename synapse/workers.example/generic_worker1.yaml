@@ -1,0 +1,22 @@
+# EXAMPLE — Generic worker 1 (copy to synapse/workers/ and adjust).
+# Replace matrix.example.com with your actual server_name if referenced anywhere.
+#
+# Stream writes owned: typing, to_device, account_data, receipts, presence, push_rules
+# (matches stream_writers in homeserver.yaml.example workers section)
+#
+# Docker service (example): synapse-generic-worker-1
+# Ports: 8083 (HTTP), 9083 (replication)
+
+worker_app: synapse.app.generic_worker
+worker_name: generic_worker1
+
+worker_listeners:
+  - port: 8083
+    type: http
+    resources:
+      - names: [client, federation]
+
+  - port: 9083
+    type: http
+    resources:
+      - names: [replication]

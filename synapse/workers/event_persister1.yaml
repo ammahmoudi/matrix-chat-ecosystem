@@ -1,0 +1,30 @@
+# Event persister worker — offloads event DB writes from the main process.
+#
+# Responsible for:
+#   - Receiving new events from event_creator workers (or main)
+#   - Linking events into the room DAG
+#   - Persisting events to PostgreSQL
+#   - Advancing the `events` stream
+#
+# NOTE: Does NOT serve any client HTTP endpoints directly.
+#       nginx does NOT route to this worker's port.
+#       Only the replication listener is needed so the main process can
+#       delegate event persistence to it.
+#
+# To add a second persister (event_persister2), duplicate this file, change
+# worker_name and ports, add it to docker-compose.workers.yml, update
+# instance_map and stream_writers.events in homeserver.yaml, then restart
+# ALL worker instances (required when changing event persister count).
+#
+# Docker service: synapse-event-persister-1
+# Ports (internal, matrix-net only):
+#   9085 — replication HTTP  (main process delegates event writes here)
+
+worker_app: synapse.app.generic_worker
+worker_name: event_persister1
+
+worker_listeners:
+  - port: 9085
+    type: http
+    resources:
+      - names: [replication]

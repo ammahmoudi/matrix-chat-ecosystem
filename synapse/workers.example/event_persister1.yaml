@@ -1,0 +1,18 @@
+# EXAMPLE — Event persister worker (copy to synapse/workers/ and adjust).
+# Writes events to PostgreSQL, offloading the main process's heaviest DB path.
+# Only a replication listener is needed; nginx does not route to this worker.
+#
+# To scale to 2 persisters: duplicate, rename to event_persister2/port 9086,
+# add to instance_map + stream_writers.events in homeserver.yaml, restart ALL
+# workers (the event shard count change requires a full restart).
+#
+# Ports: 9085 (replication only)
+
+worker_app: synapse.app.generic_worker
+worker_name: event_persister1
+
+worker_listeners:
+  - port: 9085
+    type: http
+    resources:
+      - names: [replication]

@@ -1,0 +1,15 @@
+# Background worker — periodic and replication-triggered background jobs.
+#
+# Runs tasks such as:
+#   - User directory updates  (controlled by update_user_directory_from_worker)
+#   - Room and user statistics aggregation
+#   - Expired media / message retention cleanup
+#   - Other housekeeping configured via run_background_tasks_on
+#
+# NOTE: No HTTP listener required. This worker does not serve REST endpoints
+#       and does not appear in the nginx config.
+#
+# Docker service: synapse-background-worker
+
+worker_app: synapse.app.generic_worker
+worker_name: background_worker

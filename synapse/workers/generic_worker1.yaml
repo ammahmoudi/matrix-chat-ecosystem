@@ -1,0 +1,28 @@
+# Generic worker 1 — sync, client API, and stream writes.
+#
+# This worker is the primary handler for:
+#   - /sync requests (sticky-routed per user by nginx)
+#   - Most /_matrix/client/* endpoints
+#   - Stream writes: typing, to_device, account_data, receipts, presence, push_rules
+#
+# Docker service: synapse-generic-worker-1
+# Ports (internal, matrix-net only):
+#   8083 — client/federation HTTP  (nginx routes to this)
+#   9083 — replication HTTP        (main process + workers connect here)
+
+worker_app: synapse.app.generic_worker
+worker_name: generic_worker1
+
+worker_listeners:
+  # Client and federation HTTP — nginx routes inbound Matrix requests here.
+  - port: 8083
+    type: http
+    resources:
+      - names: [client, federation]
+
+  # Replication HTTP — the main process and other workers connect to this
+  # port to replicate stream data (required because this worker is a stream writer).
+  - port: 9083
+    type: http
+    resources:
+      - names: [replication]

@@ -1,0 +1,5 @@
+# EXAMPLE — Background worker (copy to synapse/workers/ and adjust).
+# Handles periodic background tasks. No HTTP listener needed.
+
+worker_app: synapse.app.generic_worker
+worker_name: background_worker

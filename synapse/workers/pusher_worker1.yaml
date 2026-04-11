@@ -1,0 +1,14 @@
+# Pusher worker — sends push notifications to ntfy / UnifiedPush / email.
+#
+# Offloads all outbound push traffic from the main process.
+# The main process push path is disabled via `pusher_instances` in homeserver.yaml.
+#
+# NOTE: No HTTP listener required. This worker does not serve REST endpoints
+#       and does not appear in the nginx config.
+#       It DOES need host-gateway access to reach ntfy (set in docker-compose.workers.yml
+#       via extra_hosts, mirroring the main synapse service).
+#
+# Docker service: synapse-pusher-worker-1
+
+worker_app: synapse.app.generic_worker
+worker_name: pusher_worker1

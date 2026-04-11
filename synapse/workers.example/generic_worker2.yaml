@@ -1,0 +1,19 @@
+# EXAMPLE — Generic worker 2 (copy to synapse/workers/ and adjust).
+# Load-balanced with generic_worker1 for /sync and general client requests.
+# Add worker3, worker4, ... following this pattern.
+#
+# Ports: 8084 (HTTP), 9084 (replication)
+
+worker_app: synapse.app.generic_worker
+worker_name: generic_worker2
+
+worker_listeners:
+  - port: 8084
+    type: http
+    resources:
+      - names: [client, federation]
+
+  - port: 9084
+    type: http
+    resources:
+      - names: [replication]

@@ -1,0 +1,6 @@
+# EXAMPLE — Pusher worker (copy to synapse/workers/ and adjust).
+# Sends ntfy / UnifiedPush / email push notifications. No HTTP listener needed.
+# Needs host-gateway access to ntfy (already set in docker-compose.workers.yml).
+
+worker_app: synapse.app.generic_worker
+worker_name: pusher_worker1

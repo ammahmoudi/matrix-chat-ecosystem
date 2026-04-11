@@ -1,0 +1,25 @@
+# Generic worker 2 — additional sync and client API capacity.
+#
+# Load-balanced with generic_worker1 for /sync and client requests.
+# Does NOT own any streams (no stream_writers entry for this worker);
+# generic_worker1 is the sole stream writer.
+# Add more workers in this style (worker3, worker4, ...) if CPU/RAM allow.
+#
+# Docker service: synapse-generic-worker-2
+# Ports (internal, matrix-net only):
+#   8084 — client/federation HTTP  (nginx round-robins here alongside worker 1)
+#   9084 — replication HTTP        (main process connects here for fan-out)
+
+worker_app: synapse.app.generic_worker
+worker_name: generic_worker2
+
+worker_listeners:
+  - port: 8084
+    type: http
+    resources:
+      - names: [client, federation]
+
+  - port: 9084
+    type: http
+    resources:
+      - names: [replication]
