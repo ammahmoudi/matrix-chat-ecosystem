@@ -76,7 +76,7 @@ server {
     listen 80;
     server_name matrix.example.com;
 
-    client_max_body_size 100M;
+    client_max_body_size 300M;
 
     location /.well-known/matrix/client {
         default_type application/json;
@@ -115,7 +115,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/matrix.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
-    client_max_body_size 100M;
+    client_max_body_size 300M;
     resolver 127.0.0.11 valid=30s ipv6=off;
 
     location /.well-known/matrix/client {

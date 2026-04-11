@@ -70,7 +70,7 @@ server {
     listen 80;
     server_name matrix.example.com;
 
-    client_max_body_size 100M;
+    client_max_body_size 300M;
 
     location /.well-known/matrix/client {
         default_type application/json;
@@ -181,7 +181,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/matrix.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
-    client_max_body_size 100M;
+    client_max_body_size 300M;
 
     # Use Docker's internal DNS so upstream hostnames resolve dynamically at
     # request time — nginx won't crash at startup if a container isn't up yet
