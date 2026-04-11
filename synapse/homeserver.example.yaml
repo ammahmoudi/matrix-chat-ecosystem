@@ -3342,14 +3342,14 @@ key_refresh_interval: 2d
 trusted_key_servers:
 - server_name: matrix.org
 
-trusted_key_servers:
-- server_name: my_trusted_server.example.com
-  verify_keys:
-    ed25519:auto: abcdefghijklmnopqrstuvwxyzabcdefghijklmopqr
-- server_name: my_other_trusted_server.example.com
+# trusted_key_servers:
+# - server_name: my_trusted_server.example.com
+#   verify_keys:
+#     ed25519:auto: abcdefghijklmnopqrstuvwxyzabcdefghijklmopqr
+# - server_name: my_other_trusted_server.example.com
 
-trusted_key_servers:
-- server_name: matrix.org
+# trusted_key_servers:
+# - server_name: matrix.org
 
 # ------------------------------------------------------------------------------
 # OPTION: suppress_key_server_warning
