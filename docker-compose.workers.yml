@@ -64,7 +64,7 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-generic-1
     restart: unless-stopped
-    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/generic_worker1.yaml
+    command: python -m synapse.app.generic_worker --config-path=/config/homeserver.yaml --config-path=/config/workers/generic_worker1.yaml
     extra_hosts:
       - "${PUSH_DOMAIN:-push.example.com}:host-gateway"
     depends_on:
@@ -94,7 +94,7 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-generic-2
     restart: unless-stopped
-    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/generic_worker2.yaml
+    command: python -m synapse.app.generic_worker --config-path=/config/homeserver.yaml --config-path=/config/workers/generic_worker2.yaml
     extra_hosts:
       - "${PUSH_DOMAIN:-push.example.com}:host-gateway"
     depends_on:
@@ -125,7 +125,7 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-event-pers-1
     restart: unless-stopped
-    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/event_persister1.yaml
+    command: python -m synapse.app.generic_worker --config-path=/config/homeserver.yaml --config-path=/config/workers/event_persister1.yaml
     depends_on:
       synapse:
         condition: service_healthy
@@ -148,7 +148,7 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-background
     restart: unless-stopped
-    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/background_worker.yaml
+    command: python -m synapse.app.generic_worker --config-path=/config/homeserver.yaml --config-path=/config/workers/background_worker.yaml
     depends_on:
       synapse:
         condition: service_healthy
@@ -172,7 +172,7 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-pusher-1
     restart: unless-stopped
-    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/pusher_worker1.yaml
+    command: python -m synapse.app.generic_worker --config-path=/config/homeserver.yaml --config-path=/config/workers/pusher_worker1.yaml
     extra_hosts:
       - "${PUSH_DOMAIN:-push.example.com}:host-gateway"
     depends_on:
@@ -199,7 +199,7 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-federation-sender-1
     restart: unless-stopped
-    command: run --config-path=/config/homeserver.yaml --config-path=/config/workers/federation_sender1.yaml
+    command: python -m synapse.app.generic_worker --config-path=/config/homeserver.yaml --config-path=/config/workers/federation_sender1.yaml
     depends_on:
       synapse:
         condition: service_healthy
