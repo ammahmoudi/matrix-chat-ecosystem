@@ -6,6 +6,8 @@ server_name: "matrix.example.com"
 pid_file: /data/homeserver.pid
 
 listeners:
+  # Primary HTTP listener — serves client and federation traffic.
+  # nginx terminates TLS and forwards here with X-Forwarded-Proto.
   - port: 8008
     resources:
     - compress: false
@@ -15,6 +17,15 @@ listeners:
     tls: false
     type: http
     x_forwarded: true
+
+  # WORKERS MODE — uncomment to expose the internal replication port.
+  # NEVER expose 9093 to the public internet.
+  #
+  # - port: 9093
+  #   bind_address: '0.0.0.0'
+  #   type: http
+  #   resources:
+  #     - names: [replication]
 
 database:
   name: psycopg2
@@ -81,3 +92,60 @@ url_preview_ip_range_blacklist:
 
 auto_join_rooms:
   - "#general:matrix.example.com"
+
+# ==============================================================================
+# WORKERS MODE — multiprocess scaling (opt-in).
+#
+# DEFAULT: single-process. All lines in this section are commented out.
+#
+# To enable workers mode:
+#   1. Uncomment the replication listener in the listeners block above.
+#   2. Uncomment everything below (except NOTE lines).
+#   3. Generate a strong random secret for worker_replication_secret.
+#   4. Start the stack with:
+#        docker compose -f docker-compose.yml -f docker-compose.workers.yml up -d
+#
+# NOTE: Requires PostgreSQL (already configured above).
+# NOTE: All workers share the same PostgreSQL database.
+# NOTE: Restart ALL workers when adding/removing event persisters.
+# NOTE: Replication port (9093) must NEVER be exposed outside matrix-net.
+# ==============================================================================
+
+# redis:
+#   enabled: true
+#   host: redis
+#   port: 6379
+
+# worker_replication_secret: "CHANGE_ME_STRONG_RANDOM_SECRET"
+
+# instance_map:
+#   main:
+#     host: synapse
+#     port: 9093
+#   generic_worker1:
+#     host: synapse-generic-worker-1
+#     port: 9083
+#   generic_worker2:
+#     host: synapse-generic-worker-2
+#     port: 9084
+#   event_persister1:
+#     host: synapse-event-persister-1
+#     port: 9085
+
+# stream_writers:
+#   events:
+#     - event_persister1
+#   typing: generic_worker1
+#   to_device: generic_worker1
+#   account_data: generic_worker1
+#   receipts: generic_worker1
+#   presence: generic_worker1
+#   push_rules: generic_worker1
+
+# run_background_tasks_on: background_worker
+# update_user_directory_from_worker: generic_worker1
+
+# pusher_instances:
+#   - pusher_worker1
+
+# send_federation: false
