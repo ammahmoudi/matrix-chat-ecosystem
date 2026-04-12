@@ -76,6 +76,11 @@
         "feature_group_calls": true
     },
 
+    "element_call": {
+        "url": "https://call.mamood.ir",
+        "use_exclusively": false
+    },
+
     "room_directory": {
         "servers": [ "matrix.mamood.ir" ]
     },
