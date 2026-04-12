@@ -21,6 +21,6 @@ rtc:
 turn:
   enabled: false
 
-# API key / secret injected from environment (see docker-compose.yml)
-# keys:
-#   ${LIVEKIT_KEY}: ${LIVEKIT_SECRET}
+# API key / secret — must match LIVEKIT_KEY and LIVEKIT_SECRET in .env
+keys:
+  YOUR_LIVEKIT_KEY: YOUR_LIVEKIT_SECRET

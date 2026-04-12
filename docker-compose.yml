@@ -144,9 +144,6 @@ services:
     container_name: mamood-livekit
     restart: unless-stopped
     command: --config /etc/livekit.yaml
-    environment:
-      # API key/secret pair — must match lk-jwt-service below
-      - LIVEKIT_KEYS=${LIVEKIT_KEY:-mamood}:${LIVEKIT_SECRET:?LIVEKIT_SECRET is required}
     ports:
       # WebSocket signalling (nginx terminates TLS and proxies here)
       - "7880:7880"

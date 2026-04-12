@@ -15,6 +15,9 @@ element/welcome.html
 cinny/config.json
 fluffychat/config.json
 synapse-admin/config.json
+livekit/livekit.yaml
+coturn/turnserver.conf
+element-call/config.json
 
 # nginx site configs contain real domain names / SSL paths — keep local
 nginx/default.conf
