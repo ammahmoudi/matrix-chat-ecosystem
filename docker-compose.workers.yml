@@ -127,6 +127,8 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-event-pers-1
     restart: unless-stopped
+    healthcheck:
+      disable: true
     entrypoint: ["python", "-m", "synapse.app.generic_worker"]
     command: ["--config-path=/config/homeserver.yaml", "--config-path=/config/workers/event_persister1.yaml"]
     depends_on:
@@ -151,6 +153,8 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-background
     restart: unless-stopped
+    healthcheck:
+      disable: true
     entrypoint: ["python", "-m", "synapse.app.generic_worker"]
     command: ["--config-path=/config/homeserver.yaml", "--config-path=/config/workers/background_worker.yaml"]
     depends_on:
@@ -176,6 +180,8 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-pusher-1
     restart: unless-stopped
+    healthcheck:
+      disable: true
     entrypoint: ["python", "-m", "synapse.app.generic_worker"]
     command: ["--config-path=/config/homeserver.yaml", "--config-path=/config/workers/pusher_worker1.yaml"]
     extra_hosts:
@@ -204,6 +210,8 @@ services:
     image: matrixdotorg/synapse:latest
     container_name: mamood-synapse-federation-sender-1
     restart: unless-stopped
+    healthcheck:
+      disable: true
     entrypoint: ["python", "-m", "synapse.app.generic_worker"]
     command: ["--config-path=/config/homeserver.yaml", "--config-path=/config/workers/federation_sender1.yaml"]
     depends_on:
