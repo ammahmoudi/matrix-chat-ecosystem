@@ -74,6 +74,17 @@ limit_profile_requests_to_users_who_share_rooms: false
 presence:
   enabled: true
 
+# --- TURN / STUN (voice & video calls) ---
+# coturn is deployed as a separate service (see docker-compose.yml).
+# Set TURN_SECRET in .env — it must match coturn/turnserver.conf.
+turn_uris:
+  - "turn:matrix.mamood.ir:3478?transport=udp"
+  - "turn:matrix.mamood.ir:3478?transport=tcp"
+  - "turns:matrix.mamood.ir:5349?transport=tcp"
+turn_shared_secret: "${TURN_SECRET}"
+turn_user_lifetime: 86400000
+turn_allow_guests: false
+
 url_preview_enabled: true
 
 ip_range_whitelist:

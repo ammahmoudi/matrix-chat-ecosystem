@@ -166,7 +166,7 @@ services:
     restart: unless-stopped
     environment:
       - LIVEKIT_JWT_PORT=8080
-      - LIVEKIT_URL=wss://call.mamood.ir/livekit/sfu
+      - LIVEKIT_URL=wss://call.chat.mamood.ir/livekit/sfu
       - LIVEKIT_KEY=${LIVEKIT_KEY:-mamood}
       - LIVEKIT_SECRET=${LIVEKIT_SECRET:?LIVEKIT_SECRET is required}
       # Allow all homeservers on this install (restrict with a comma-separated list if needed)
