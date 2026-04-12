@@ -1,4 +1,4 @@
- b# EXAMPLE — Federation sender worker (copy to synapse/workers/ and adjust).
+# EXAMPLE — Federation sender worker (copy to synapse/workers/ and adjust).
 # Handles all outbound federation traffic. No HTTP listener needed.
 # Requires send_federation: false in homeserver.yaml.
 #
