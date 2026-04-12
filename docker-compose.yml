@@ -134,6 +134,75 @@ services:
     networks:
       - matrix-net
 
+  # ---------------------------------------------------------------------------
+  # VOICE & VIDEO CALLS
+  # ---------------------------------------------------------------------------
+
+  # LiveKit SFU — real-time media server for MatrixRTC group calls
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: mamood-livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    environment:
+      # API key/secret pair — must match lk-jwt-service below
+      - LIVEKIT_KEYS=${LIVEKIT_KEY:-mamood}:${LIVEKIT_SECRET:?LIVEKIT_SECRET is required}
+    ports:
+      # WebSocket signalling (nginx terminates TLS and proxies here)
+      - "7880:7880"
+      # RTC TCP fallback
+      - "7881:7881"
+      # RTC UDP media — keep these open in your firewall
+      - "50100-50200:50100-50200/udp"
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
+    networks:
+      - matrix-net
+
+  # lk-jwt-service — mints short-lived LiveKit JWTs for authenticated Matrix users
+  livekit-jwt:
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    container_name: mamood-livekit-jwt
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_JWT_PORT=8080
+      - LIVEKIT_URL=wss://call.mamood.ir/livekit/sfu
+      - LIVEKIT_KEY=${LIVEKIT_KEY:-mamood}
+      - LIVEKIT_SECRET=${LIVEKIT_SECRET:?LIVEKIT_SECRET is required}
+      # Allow all homeservers on this install (restrict with a comma-separated list if needed)
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=matrix.mamood.ir
+    depends_on:
+      - livekit
+    networks:
+      - matrix-net
+
+  # Element Call SPA — the in-browser video/voice call UI
+  element-call:
+    image: ghcr.io/element-hq/element-call:latest
+    container_name: mamood-element-call
+    restart: unless-stopped
+    volumes:
+      - ./element-call/config.json:/app/config/config.json:ro
+    networks:
+      - matrix-net
+
+  # coturn TURN server — relays UDP/TCP media for users behind strict NAT
+  # Uses host networking so TURN port-mapping works correctly.
+  coturn:
+    image: coturn/coturn:latest
+    container_name: mamood-coturn
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+      - /etc/letsencrypt/live/matrix.mamood.ir/fullchain.pem:/etc/ssl/turn/fullchain.pem:ro
+      - /etc/letsencrypt/live/matrix.mamood.ir/privkey.pem:/etc/ssl/turn/privkey.pem:ro
+    environment:
+      - TURN_SECRET=${TURN_SECRET:?TURN_SECRET is required}
+    command: >
+      -c /etc/coturn/turnserver.conf
+      --static-auth-secret=${TURN_SECRET}
+
   nginx:
     image: nginx:latest
     container_name: mamood-nginx
@@ -159,6 +228,10 @@ services:
       fluffychat-web:
         condition: service_started
       ntfy:
+        condition: service_started
+      element-call:
+        condition: service_started
+      livekit-jwt:
         condition: service_started
     networks:
       - matrix-net
