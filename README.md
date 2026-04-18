@@ -14,6 +14,7 @@ This repo is not a new homeserver implementation — it **assembles upstream pro
 | Cinny | Alternative lightweight web client |
 | FluffyChat Web | Alternative Flutter-based web client |
 | Synapse Admin | Admin dashboard for Synapse |
+| Element Admin | Alternative modern admin dashboard |
 | MAS Admin | Admin UI for MAS (users, tokens, sessions) |
 | nginx | Reverse proxy + routing (+ TLS in production) |
 | Postgres | Database backend (creates `matrix` + `mas`) |
@@ -31,6 +32,7 @@ You can host these on one domain or split them — this is only a typical mappin
 | Push (ntfy) | `https://push.example.com` |
 | MAS Admin Panel | `https://matrix.example.com/mas-admin/` |
 | Synapse Admin Dashboard | `https://matrix.example.com/synapse-admin/` |
+| Element Admin Dashboard | `https://matrix.example.com/element-admin/` |
 
 Configure the actual domains/paths in the nginx + Synapse + MAS configs.
 
@@ -47,6 +49,7 @@ Local access:
 - Element: `http://localhost`
 - Synapse API (direct): `http://localhost:8008`
 - Synapse Admin (via nginx): `http://localhost/synapse-admin/`
+- Element Admin (via nginx): `http://localhost/element-admin/`
 
 ## First-time setup
 
@@ -159,6 +162,7 @@ This stack includes a self-hosted [ntfy](https://ntfy.sh) service as a **Unified
 **Full setup guide:** [docs/ntfy-push-notifications.md](docs/ntfy-push-notifications.md)
 
 Covers:
+
 - Required `synapse/homeserver.yaml` changes (`ip_range_whitelist`)
 - Required nginx proxy block for the push subdomain
 - First-run access control (`ntfy access everyone 'up*' read-write`)
@@ -172,6 +176,7 @@ Covers:
 
 - MAS Admin Panel: served by nginx at `/mas-admin/`
 - Synapse Admin: served by nginx at `/synapse-admin/`
+- Element Admin: served by nginx at `/element-admin/`
 
 Rebuild MAS Admin after changing its source or build-time environment:
 

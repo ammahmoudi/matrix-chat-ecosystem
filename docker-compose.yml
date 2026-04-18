@@ -89,6 +89,14 @@ services:
     networks:
       - matrix-net
 
+  # Element Admin: served via nginx at https://matrix.example.com/element-admin/
+  element-admin:
+    image: oci.element.io/element-admin:latest
+    container_name: mamood-element-admin
+    restart: unless-stopped
+    networks:
+      - matrix-net
+
   ntfy:
     image: binwiederhier/ntfy
     container_name: mamood-ntfy
@@ -217,6 +225,8 @@ services:
       element:
         condition: service_started
       synapse-admin:
+        condition: service_started
+      element-admin:
         condition: service_started
       mas-admin:
         condition: service_started

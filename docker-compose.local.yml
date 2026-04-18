@@ -5,6 +5,7 @@
 #   Element:       http://localhost
 #   Synapse API:   http://localhost:8008
 #   Synapse Admin: http://localhost/synapse-admin/ (legacy: http://localhost:8080 redirects)
+#   Element Admin: http://localhost/element-admin/
 
 services:
   nginx:

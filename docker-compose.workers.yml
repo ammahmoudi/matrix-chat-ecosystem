@@ -246,6 +246,8 @@ services:
         condition: service_started
       synapse-admin:
         condition: service_started
+      element-admin:
+        condition: service_started
       mas-admin:
         condition: service_started
       cinny:

@@ -17,6 +17,7 @@ docker pull ghcr.io/element-hq/matrix-authentication-service:latest
 docker pull matrixdotorg/synapse:latest
 docker pull vectorim/element-web:latest
 docker pull etkecc/synapse-admin:latest
+docker pull oci.element.io/element-admin:latest
 docker pull amahmoudi/mas-admin:latest
 docker pull amahmoudi/fluffychat-web:latest
 docker pull binwiederhier/ntfy
@@ -41,6 +42,7 @@ docker save -o artifacts/docker-images/matrix-images.tar \
   matrixdotorg/synapse:latest \
   vectorim/element-web:latest \
   etkecc/synapse-admin:latest \
+  oci.element.io/element-admin:latest \
   amahmoudi/mas-admin:latest \
   amahmoudi/fluffychat-web:latest \
   binwiederhier/ntfy \
@@ -69,5 +71,5 @@ From this point, `docker compose up -d` should start without pulling, as long as
 ## Optional: verify locally available images
 
 ```bash
-docker image ls | egrep "postgres|matrix-authentication-service|synapse|element-web|synapse-admin|ntfy|cinny|nginx|mas-admin|fluffychat"
+docker image ls | egrep "postgres|matrix-authentication-service|synapse|element-web|synapse-admin|element-admin|ntfy|cinny|nginx|mas-admin|fluffychat"
 ```
